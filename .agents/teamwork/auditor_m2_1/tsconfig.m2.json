@@ -1,0 +1,24 @@
+{
+  "extends": "../../../tsconfig.json",
+  "include": [
+    "../../../next-env.d.ts",
+    "../../../src/app/page.tsx",
+    "../../../src/app/layout.tsx",
+    "../../../src/components/overview/**/*",
+    "../../../src/components/layout/**/*",
+    "../../../src/components/mui/**/*",
+    "../../../src/components/common/**/*",
+    "../../../src/lib/**/*",
+    "../../../src/services/overviewService.ts",
+    "../../../src/services/mockData.ts",
+    "../../../src/types/**/*",
+    "../../../src/services/__tests__/overviewService.test.ts",
+    "../../../tests/service_and_modal.test.ts"
+  ],
+  "exclude": [
+    "../../../node_modules",
+    "../../../src/app/finance/**/*",
+    "../../../src/components/finance/**/*",
+    "../../../tests/m2_adversarial_reviewer.test.ts"
+  ]
+}

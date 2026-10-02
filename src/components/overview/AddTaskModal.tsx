@@ -1,0 +1,199 @@
+"use client";
+
+import React, { useState } from "react";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
+import { DailyTask, TaskCategory, PriorityLevel } from "@/types/models";
+import { overviewService } from "@/services/overviewService";
+
+export interface AddTaskModalProps {
+  open: boolean;
+  onClose: () => void;
+  onTaskAdded: (newTask: DailyTask) => void;
+}
+
+export default function AddTaskModal({
+  open,
+  onClose,
+  onTaskAdded,
+}: AddTaskModalProps) {
+  const [title, setTitle] = useState<string>("");
+  const [category, setCategory] = useState<TaskCategory>("work");
+  const [priority, setPriority] = useState<PriorityLevel>("medium");
+  const [dueInfo, setDueInfo] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+
+  const handleReset = () => {
+    setTitle("");
+    setCategory("work");
+    setPriority("medium");
+    setDueInfo("");
+    setError("");
+  };
+
+  const handleClose = () => {
+    handleReset();
+    onClose();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) {
+      setError("Task title is required");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const categoryLabels: Record<TaskCategory, string> = {
+        work: "Work · Engineering",
+        personal: "Personal · Health",
+        finance: "Finance · Operating",
+        learning: "Learning · Research",
+      };
+
+      const newTask = await overviewService.addTask({
+        title: title.trim(),
+        category,
+        categoryLabel: categoryLabels[category],
+        priority,
+        isCompleted: false,
+        dueInfo: dueInfo.trim() || undefined,
+      });
+
+      onTaskAdded(newTask);
+      handleClose();
+    } catch (err) {
+      console.error("Failed to add task:", err);
+      setError("Failed to create task");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="xs"
+      fullWidth
+      slotProps={{
+        paper: {
+          component: "form",
+          onSubmit: handleSubmit,
+          sx: {
+            borderRadius: 3,
+            bgcolor: "#FCFBF8",
+            border: "1px solid rgba(17, 28, 46, 0.08)",
+            p: 1,
+          },
+        },
+      }}
+    >
+      <DialogTitle sx={{ pb: 1, display: "flex", alignItems: "center", gap: 1 }}>
+        <CheckCircleOutlineIcon sx={{ fontSize: 20, color: "#0B1628" }} />
+        <Typography variant="h6" sx={{ fontSize: "1.125rem", fontWeight: 600, color: "#0B1628" }}>
+          New Focus Task
+        </Typography>
+      </DialogTitle>
+
+      <DialogContent sx={{ pt: 1 }}>
+        <Stack spacing={2.5}>
+          <TextField
+            autoFocus
+            fullWidth
+            label="Task Description"
+            placeholder="e.g. Audit Q3 treasury yields"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (error) setError("");
+            }}
+            error={Boolean(error)}
+            helperText={error}
+            size="small"
+            required
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                bgcolor: "#FFFFFF",
+              },
+            }}
+          />
+
+          <FormControl fullWidth size="small">
+            <InputLabel>Category</InputLabel>
+            <Select
+              value={category}
+              label="Category"
+              onChange={(e) => setCategory(e.target.value as TaskCategory)}
+              sx={{ bgcolor: "#FFFFFF" }}
+            >
+              <MenuItem value="work">Work · Engineering</MenuItem>
+              <MenuItem value="finance">Finance · Operating</MenuItem>
+              <MenuItem value="personal">Personal · Health</MenuItem>
+              <MenuItem value="learning">Learning · Research</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth size="small">
+            <InputLabel>Priority</InputLabel>
+            <Select
+              value={priority}
+              label="Priority"
+              onChange={(e) => setPriority(e.target.value as PriorityLevel)}
+              sx={{ bgcolor: "#FFFFFF" }}
+            >
+              <MenuItem value="high">High Priority</MenuItem>
+              <MenuItem value="medium">Medium Priority</MenuItem>
+              <MenuItem value="low">Low Priority</MenuItem>
+            </Select>
+          </FormControl>
+
+          <TextField
+            fullWidth
+            label="Due / Schedule (Optional)"
+            placeholder="e.g. Due 5:30 PM"
+            value={dueInfo}
+            onChange={(e) => setDueInfo(e.target.value)}
+            size="small"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                bgcolor: "#FFFFFF",
+              },
+            }}
+          />
+        </Stack>
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, pb: 2, pt: 1 }}>
+        <Button onClick={handleClose} disabled={isSubmitting} sx={{ color: "#68717C" }}>
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={isSubmitting}
+          sx={{
+            bgcolor: "#0B1628",
+            color: "#FCFBF8",
+            "&:hover": { bgcolor: "#162338" },
+          }}
+        >
+          {isSubmitting ? "Adding..." : "Add Task"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}

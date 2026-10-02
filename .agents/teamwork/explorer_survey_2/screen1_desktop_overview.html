@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ANCHOR — Personal Operating System</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Editorial & Mono Typography -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN with forms & container queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration verbatim from Design System -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "inverse-surface": "#30312d",
+            "primary-container": "#111c2e",
+            "on-background": "#1b1c18",
+            "tertiary-fixed": "#afeeec",
+            "error": "#ba1a1a",
+            "secondary-fixed-dim": "#a8caeb",
+            "on-tertiary-fixed-variant": "#00504e",
+            "primary": "#000000",
+            "surface-bright": "#fbf9f3",
+            "outline-variant": "#c5c6cd",
+            "surface-container-highest": "#e4e2dd",
+            "on-tertiary": "#ffffff",
+            "on-surface-variant": "#45474c",
+            "background": "#fbf9f3",
+            "primary-fixed-dim": "#bcc7df",
+            "tertiary": "#000000",
+            "surface-container-high": "#eae8e2",
+            "surface": "#fbf9f3",
+            "secondary": "#40617e",
+            "on-primary-container": "#7a849b",
+            "surface-variant": "#e4e2dd",
+            "on-tertiary-container": "#508e8c",
+            "inverse-primary": "#bcc7df",
+            "outline": "#75777d",
+            "surface-tint": "#545f74",
+            "on-error": "#ffffff",
+            "on-secondary": "#ffffff",
+            "on-primary": "#ffffff",
+            "secondary-container": "#bcdeff",
+            "secondary-fixed": "#cde5ff",
+            "on-secondary-fixed": "#001d32",
+            "error-container": "#ffdad6",
+            "on-tertiary-fixed": "#00201f",
+            "on-primary-fixed": "#111c2e",
+            "surface-dim": "#dcdad4",
+            "inverse-on-surface": "#f3f1eb",
+            "on-error-container": "#93000a",
+            "surface-container": "#f0eee8",
+            "on-surface": "#1b1c18",
+            "on-secondary-fixed-variant": "#274a65",
+            "on-primary-fixed-variant": "#3d475b",
+            "primary-fixed": "#d8e3fc",
+            "tertiary-container": "#00201f",
+            "tertiary-fixed-dim": "#93d2cf",
+            "on-secondary-container": "#41627f",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-low": "#f5f3ed"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter": "1.5rem",
+            "space-xl": "2.5rem",
+            "margin-lg": "3.5rem",
+            "space-md": "1rem",
+            "space-sm": "0.5rem",
+            "margin": "2rem",
+            "space-lg": "1.5rem",
+            "gutter-sm": "1rem",
+            "space-xs": "0.25rem",
+            "gutter-lg": "2rem",
+            "margin-sm": "1rem"
+          },
+          "fontFamily": {
+            "body-lg": ["Plus Jakarta Sans"],
+            "headline-lg-mobile": ["Newsreader"],
+            "caption": ["Plus Jakarta Sans"],
+            "label-caps": ["Plus Jakarta Sans"],
+            "display-hero-mobile": ["Newsreader"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "headline-md": ["Newsreader"],
+            "label-numeric": ["JetBrains Mono"],
+            "display-hero": ["Newsreader"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "headline-lg": ["Newsreader"]
+          },
+          "fontSize": {
+            "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "caption": ["11px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+            "display-hero-mobile": ["38px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "label-numeric": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+            "display-hero": ["56px", { "lineHeight": "64px", "letterSpacing": "-0.02em", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "headline-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.015em", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      font-size: 20px;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .tnum {
+      font-feature-settings: "tnum" 1, "zero" 1;
+    }
+    /* Subtle custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F7F5EF;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #C5C6CD;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #75777D;
+    }
+  </style>
+</head>
+<body class="bg-[#F7F5EF] text-on-surface antialiased min-h-screen selection:bg-secondary/20 selection:text-primary">
+<!-- APP SHELL CONTAINER -->
+<div class="flex min-h-screen w-full relative">
+<!-- 1. LEFT SIDEBAR (SideNavBar Component Anchor) -->
+<aside class="fixed top-0 left-0 h-screen w-64 flex flex-col justify-between bg-surface-container-low border-r border-outline-variant/30 z-30 select-none">
+<!-- Upper Section: Brand Anchor & Navigation Links -->
+<div class="flex flex-col w-full">
+<!-- Logo & Monogram Header -->
+<div class="px-space-md pt-space-lg pb-space-md border-b border-outline-variant/20 flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-primary-container text-surface-container-lowest flex items-center justify-center font-headline-md text-headline-md tracking-tight shadow-sm">
+<span class="font-headline-md text-headline-md leading-none text-surface-container-lowest font-medium">⚓</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md font-medium tracking-tight text-on-background leading-none">ANCHOR</span>
+<span class="font-caption text-caption text-on-surface-variant/80 mt-0.5 font-medium">Personal Operating System</span>
+</div>
+</div>
+</div>
+<!-- Quick Entry CTA -->
+<div class="p-space-md pb-space-xs">
+<button class="w-full bg-primary-container hover:bg-[#182840] text-surface-container-lowest font-body-md text-body-md font-medium py-2.5 px-space-md rounded-lg flex items-center justify-center gap-space-xs transition-all duration-150 active:scale-[0.99] shadow-sm border border-white/10">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>+ Quick Entry</span>
+</button>
+</div>
+<!-- Navigation Tabs Rail -->
+<nav aria-label="Main Navigation" class="mt-space-sm px-space-md space-y-1">
+<!-- Overview: Active State -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm text-primary font-semibold bg-surface-container-highest/60 rounded-lg transition-colors duration-150 relative" href="#overview">
+<span class="w-1.5 h-1.5 rounded-full bg-primary absolute left-2"></span>
+<span class="material-symbols-outlined ml-1.5 text-primary" data-icon="dashboard">dashboard</span>
+<span class="font-body-md text-body-md">Overview</span>
+</a>
+<!-- Finance -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant font-medium rounded-lg hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 active:scale-[0.99]" href="#finance">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="account_balance">account_balance</span>
+<span class="font-body-md text-body-md">Finance</span>
+</a>
+<!-- Tasks (With Counter Badge) -->
+<a class="flex items-center justify-between px-space-md py-space-sm text-on-surface-variant font-medium rounded-lg hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 active:scale-[0.99]" href="#tasks">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-body-md">Tasks</span>
+</div>
+<span class="font-label-numeric text-caption px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-medium">5</span>
+</a>
+<!-- Projects -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant font-medium rounded-lg hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 active:scale-[0.99]" href="#projects">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="folder_open">folder_open</span>
+<span class="font-body-md text-body-md">Projects</span>
+</a>
+<!-- Notes -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant font-medium rounded-lg hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 active:scale-[0.99]" href="#notes">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="edit_note">edit_note</span>
+<span class="font-body-md text-body-md">Notes</span>
+</a>
+<!-- Goals -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant font-medium rounded-lg hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 active:scale-[0.99]" href="#goals">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="flag">flag</span>
+<span class="font-body-md text-body-md">Goals</span>
+</a>
+<!-- Calendar -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant font-medium rounded-lg hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 active:scale-[0.99]" href="#calendar">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="calendar_today">calendar_today</span>
+<span class="font-body-md text-body-md">Calendar</span>
+</a>
+<!-- Settings -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant font-medium rounded-lg hover:bg-surface-container-high hover:text-on-surface transition-colors duration-150 active:scale-[0.99]" href="#settings">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</nav>
+</div>
+<!-- Bottom Profile & Collapse Section -->
+<div class="p-space-md border-t border-outline-variant/30 bg-surface-container-low/50">
+<!-- User Identity Chip -->
+<div class="flex items-center justify-between p-2 rounded-lg hover:bg-surface-container-high transition-colors duration-150 cursor-pointer mb-2">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-secondary/15 border border-secondary/30 flex items-center justify-center text-secondary font-headline-sm font-semibold">
+<span class="font-body-sm text-body-sm font-semibold text-secondary">AV</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-medium text-on-surface leading-tight">Alex Vance</span>
+<span class="font-caption text-caption text-secondary font-medium">Executive Tier</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px]">more_vert</span>
+</div>
+<!-- Collapse Rail Hint -->
+<button class="w-full flex items-center justify-between px-2 py-1.5 rounded text-outline hover:text-on-surface hover:bg-surface-container-high text-xs transition-colors">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]" data-icon="keyboard_double_arrow_left">keyboard_double_arrow_left</span>
+<span class="font-caption text-caption">Collapse rail</span>
+</div>
+<kbd class="font-label-numeric text-[10px] bg-surface-container-highest px-1.5 py-0.5 rounded border border-outline-variant/40">⌘K</kbd>
+</button>
+</div>
+</aside>
+<!-- 2. MAIN WORKSPACE CANVAS (Left Margin 256px for persistent rail) -->
+<main class="ml-64 flex-1 flex flex-col min-w-0 pb-16 bg-[#F7F5EF]">
+<!-- TOP EDITORIAL HEADER BAR -->
+<header class="sticky top-0 z-20 w-full bg-[#F7F5EF]/95 backdrop-blur-md border-b border-outline-variant/20 px-8 py-4 flex items-center justify-between">
+<!-- Left: Editorial Morning Greeting -->
+<div class="flex flex-col">
+<div class="flex items-center gap-3">
+<h1 class="font-headline-lg text-[26px] leading-tight text-on-surface font-normal tracking-tight">
+              Good morning, Alex.
+            </h1>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#5F9277]/10 border border-[#5F9277]/30 text-[#3F6853] text-[11px] font-body-sm font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-[#3F6853]"></span>
+              System Steady
+            </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+            Friday · September 11 — You're staying on track.
+          </p>
+</div>
+<!-- Right: Action & Search Cluster -->
+<div class="flex items-center gap-3">
+<!-- Search Bar -->
+<div class="relative w-72">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-outline">
+<span class="material-symbols-outlined text-[18px]">search</span>
+</span>
+<input class="w-full pl-9 pr-12 py-1.5 text-body-sm font-body-sm bg-[#FCFBF8] border border-outline-variant/40 rounded-lg text-on-surface placeholder:text-outline-variant/80 focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary transition-all" placeholder="Search ANCHOR... ⌘K" type="text"/>
+<span class="absolute inset-y-0 right-0 flex items-center pr-2.5">
+<kbd class="font-label-numeric text-[10px] bg-surface-container text-outline px-1.5 py-0.5 rounded border border-outline-variant/30">⌘K</kbd>
+</span>
+</div>
+<!-- Notification Bell -->
+<button aria-label="Notifications" class="relative p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-secondary border-2 border-[#F7F5EF]"></span>
+</button>
+<!-- + Add Entry Button with Contextual Quick Action Menu -->
+<div class="relative group">
+<button class="bg-primary-container hover:bg-[#182840] text-surface-container-lowest font-body-sm text-body-sm font-medium py-2 px-4 rounded-lg flex items-center gap-1.5 transition-all shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>+ Add Entry</span>
+<span class="material-symbols-outlined text-[16px] text-surface-container-highest/70">arrow_drop_down</span>
+</button>
+<!-- Flyout Dropdown -->
+<div class="absolute right-0 mt-1 w-48 bg-[#FCFBF8] rounded-lg border border-outline-variant/30 shadow-[0_12px_32px_-4px_rgba(11,22,40,0.08)] py-1.5 hidden group-hover:block transition-all z-30">
+<a class="flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container transition-colors" href="#add-expense">
+<span class="material-symbols-outlined text-[16px] text-error">payments</span>
+<span>+ Expense</span>
+</a>
+<a class="flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container transition-colors" href="#add-income">
+<span class="material-symbols-outlined text-[16px] text-[#3F6853]">trending_up</span>
+<span>+ Income</span>
+</a>
+<div class="my-1 border-t border-outline-variant/20"></div>
+<a class="flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container transition-colors" href="#add-task">
+<span class="material-symbols-outlined text-[16px] text-secondary">check_circle</span>
+<span>+ Task</span>
+</a>
+<a class="flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container transition-colors" href="#add-note">
+<span class="material-symbols-outlined text-[16px] text-outline">edit_note</span>
+<span>+ Note</span>
+</a>
+<a class="flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container transition-colors" href="#add-goal">
+<span class="material-symbols-outlined text-[16px] text-[#8C6B28]">flag</span>
+<span>+ Goal</span>
+</a>
+</div>
+</div>
+</div>
+</header>
+<!-- CONTENT CANVAS WRAPPER -->
+<div class="max-w-[1360px] w-full mx-auto px-8 pt-6 space-y-6">
+<!-- 3. PERSISTENT FILTER STRIP -->
+<section class="flex flex-wrap items-center justify-between gap-4 py-2 border-b border-outline-variant/20 text-body-sm">
+<!-- Filter Select Pills -->
+<div class="flex items-center gap-2 flex-wrap">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#FCFBF8] border border-outline-variant/40 text-on-surface hover:border-outline text-body-sm transition-all shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-outline">calendar_month</span>
+<span class="font-medium">September 2026</span>
+<span class="material-symbols-outlined text-[16px] text-outline">expand_more</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#FCFBF8] border border-outline-variant/40 text-on-surface hover:border-outline text-body-sm transition-all shadow-sm">
+<span>All Categories</span>
+<span class="material-symbols-outlined text-[16px] text-outline">expand_more</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#FCFBF8] border border-outline-variant/40 text-on-surface hover:border-outline text-body-sm transition-all shadow-sm">
+<span>All Accounts</span>
+<span class="material-symbols-outlined text-[16px] text-outline">expand_more</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#FCFBF8] border border-outline-variant/40 text-on-surface hover:border-outline text-body-sm transition-all shadow-sm">
+<span>All Types</span>
+<span class="material-symbols-outlined text-[16px] text-outline">expand_more</span>
+</button>
+</div>
+<!-- Fast Temporal Range Switches -->
+<div class="inline-flex items-center bg-surface-container rounded p-0.5 border border-outline-variant/30 text-caption font-body-sm">
+<button class="px-3 py-1 rounded text-on-surface-variant hover:text-on-surface transition-colors">Today</button>
+<button class="px-3 py-1 rounded text-on-surface-variant hover:text-on-surface transition-colors">Week</button>
+<button class="px-3 py-1 rounded bg-[#FCFBF8] text-primary font-semibold shadow-xs">Month</button>
+<button class="px-3 py-1 rounded text-on-surface-variant hover:text-on-surface transition-colors">Quarter</button>
+</div>
+</section>
+<!-- 4. PRIMARY FINANCIAL ANCHOR HERO SECTION (Asymmetric Ledger) -->
+<section class="bg-[#FCFBF8] rounded-xl border border-black/[0.08] shadow-[0_2px_8px_-2px_rgba(11,22,40,0.03)] p-6 transition-all">
+<div class="grid grid-cols-12 gap-6 items-center">
+<!-- Left 5-Columns: Total Balance Anchor -->
+<div class="col-span-12 lg:col-span-5 pr-0 lg:pr-6 lg:border-r border-outline-variant/30">
+<div class="flex items-center justify-between mb-1.5">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">
+                  Total Liquidity &amp; Balance
+                </span>
+<span class="text-caption font-label-numeric text-outline flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-[#5F9277]"></span> Live Vault
+                </span>
+</div>
+<div class="flex items-baseline gap-3">
+<span class="font-label-numeric text-[38px] lg:text-[44px] leading-tight font-semibold tracking-tight text-on-background tnum">
+                  Rs. 79,200
+                </span>
+<span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-[#5F9277]/12 text-[#3F6853] text-[12px] font-label-numeric font-medium">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span>
+                  +4.2%
+                </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant/80 mt-1">
+                Net capital across primary operating and savings reserves vs last calendar cycle.
+              </p>
+</div>
+<!-- Right 7-Columns: Supporting 3-Column Ledger Breakdown -->
+<div class="col-span-12 lg:col-span-7 grid grid-cols-3 gap-4">
+<!-- Income Column -->
+<div class="p-3.5 rounded-lg bg-[#F7F5EF]/60 border border-black/[0.04]">
+<div class="flex items-center justify-between text-caption font-label-caps text-on-surface-variant uppercase">
+<span>Monthly Inflow</span>
+<span class="text-[#3F6853] font-label-numeric font-semibold text-[11px]">+8.5%</span>
+</div>
+<div class="mt-2 font-label-numeric text-headline-sm font-semibold text-on-surface tnum">
+                  Rs. 120,000
+                </div>
+<span class="font-caption text-caption text-outline mt-0.5 block">2 primary payrolls</span>
+</div>
+<!-- Expenses Column -->
+<div class="p-3.5 rounded-lg bg-[#F7F5EF]/60 border border-black/[0.04]">
+<div class="flex items-center justify-between text-caption font-label-caps text-on-surface-variant uppercase">
+<span>Total Expenses</span>
+<span class="text-outline font-label-numeric text-[11px]">54% burned</span>
+</div>
+<div class="mt-2 font-label-numeric text-headline-sm font-semibold text-on-surface tnum">
+                  Rs. 65,000
+                </div>
+<span class="font-caption text-caption text-outline mt-0.5 block">Under monthly ceiling</span>
+</div>
+<!-- Savings Column -->
+<div class="p-3.5 rounded-lg bg-[#F7F5EF]/60 border border-black/[0.04]">
+<div class="flex items-center justify-between text-caption font-label-caps text-on-surface-variant uppercase">
+<span>Net Retained</span>
+<span class="text-[#3F6853] font-label-numeric text-[11px] font-semibold">On Target</span>
+</div>
+<div class="mt-2 font-label-numeric text-headline-sm font-semibold text-[#3F6853] tnum">
+                  Rs. 55,000
+                </div>
+<span class="font-caption text-caption text-outline mt-0.5 block">45.8% rate preserved</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 5. MIDDLE ANALYTICS GRID (Asymmetrical 60/40 Split) -->
+<section class="grid grid-cols-12 gap-6 items-start">
+<!-- Left Column (60%): Interactive Spending by Category Donut & Mini Trends -->
+<div class="col-span-12 lg:col-span-7 bg-[#FCFBF8] rounded-xl border border-black/[0.08] shadow-[0_2px_8px_-2px_rgba(11,22,40,0.03)] p-6">
+<!-- Card Header & Toggle -->
+<div class="flex items-center justify-between pb-4 mb-5 border-b border-black/[0.06]">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-normal">
+                  Outflow Distribution &amp; Cadence
+                </h2>
+<span class="font-caption text-caption text-on-surface-variant">Allocated spending breakdown for current 30-day window</span>
+</div>
+<!-- Interactive Chart View Toggle -->
+<div class="inline-flex p-0.5 bg-surface-container rounded-lg border border-outline-variant/30 text-caption font-body-sm">
+<button class="px-2.5 py-1 rounded bg-[#FCFBF8] text-primary font-semibold shadow-xs">Category Donut</button>
+<button class="px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface transition-colors">Cashflow Cadence</button>
+</div>
+</div>
+<!-- Visualization Section: Donut + Itemized Badges -->
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
+<!-- Donut Visual SVG with Center Metrics (5 Cols) -->
+<div class="sm:col-span-5 flex flex-col items-center justify-center relative py-2">
+<div class="relative w-44 h-44 flex items-center justify-center">
+<!-- SVG Conic Ring -->
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 160 160">
+<!-- Background Circle -->
+<circle cx="80" cy="80" fill="none" r="62" stroke="#EFECE2" stroke-width="18"></circle>
+<!-- Food 30% (Circumference ~390px; 30% = 117px) -->
+<circle cx="80" cy="80" fill="none" r="62" stroke="#111C2E" stroke-dasharray="117 273" stroke-dashoffset="0" stroke-linecap="round" stroke-width="18"></circle>
+<!-- Housing 25% (97.5px) -->
+<circle cx="80" cy="80" fill="none" r="62" stroke="#40617E" stroke-dasharray="97.5 292.5" stroke-dashoffset="-120" stroke-linecap="round" stroke-width="18"></circle>
+<!-- Transport 15% (58.5px) -->
+<circle cx="80" cy="80" fill="none" r="62" stroke="#508E8C" stroke-dasharray="58.5 331.5" stroke-dashoffset="-220" stroke-linecap="round" stroke-width="18"></circle>
+<!-- Shopping 18% (70px) -->
+<circle cx="80" cy="80" fill="none" r="62" stroke="#C48858" stroke-dasharray="70 320" stroke-dashoffset="-282" stroke-linecap="round" stroke-width="18"></circle>
+<!-- Health 12% (47px) -->
+<circle cx="80" cy="80" fill="none" r="62" stroke="#93A8B8" stroke-dasharray="47 343" stroke-dashoffset="-354" stroke-linecap="round" stroke-width="18"></circle>
+</svg>
+<!-- Inside Donut Content -->
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+<span class="font-label-caps text-[10px] text-outline uppercase tracking-wider">Total Spent</span>
+<span class="font-label-numeric text-[17px] font-semibold text-on-surface tnum mt-0.5">Rs. 65,000</span>
+<span class="font-caption text-[10px] text-[#3F6853] font-medium">92% of budget</span>
+</div>
+</div>
+</div>
+<!-- Surrounding Category Breakdown Badges (7 Cols) -->
+<div class="sm:col-span-7 flex flex-col space-y-2.5">
+<!-- Food Item -->
+<div class="flex items-center justify-between p-2 rounded-md hover:bg-surface-container/60 transition-colors border border-transparent hover:border-outline-variant/20">
+<div class="flex items-center gap-2.5">
+<span class="w-3 h-3 rounded-sm bg-primary-container"></span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Food &amp; Dining</span>
+<span class="font-label-numeric text-caption text-outline">30%</span>
+</div>
+<span class="font-label-numeric text-body-md font-semibold text-on-surface tnum">Rs. 19,500</span>
+</div>
+<!-- Housing Item -->
+<div class="flex items-center justify-between p-2 rounded-md hover:bg-surface-container/60 transition-colors border border-transparent hover:border-outline-variant/20">
+<div class="flex items-center gap-2.5">
+<span class="w-3 h-3 rounded-sm bg-secondary"></span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Housing &amp; Base</span>
+<span class="font-label-numeric text-caption text-outline">25%</span>
+</div>
+<span class="font-label-numeric text-body-md font-semibold text-on-surface tnum">Rs. 16,250</span>
+</div>
+<!-- Shopping Item -->
+<div class="flex items-center justify-between p-2 rounded-md hover:bg-surface-container/60 transition-colors border border-transparent hover:border-outline-variant/20">
+<div class="flex items-center gap-2.5">
+<span class="w-3 h-3 rounded-sm bg-[#C48858]"></span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Shopping &amp; Gear</span>
+<span class="font-label-numeric text-caption text-outline">18%</span>
+</div>
+<span class="font-label-numeric text-body-md font-semibold text-on-surface tnum">Rs. 11,700</span>
+</div>
+<!-- Transport Item -->
+<div class="flex items-center justify-between p-2 rounded-md hover:bg-surface-container/60 transition-colors border border-transparent hover:border-outline-variant/20">
+<div class="flex items-center gap-2.5">
+<span class="w-3 h-3 rounded-sm bg-[#508E8C]"></span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Transit &amp; Travel</span>
+<span class="font-label-numeric text-caption text-outline">15%</span>
+</div>
+<span class="font-label-numeric text-body-md font-semibold text-on-surface tnum">Rs. 9,750</span>
+</div>
+<!-- Health Item -->
+<div class="flex items-center justify-between p-2 rounded-md hover:bg-surface-container/60 transition-colors border border-transparent hover:border-outline-variant/20">
+<div class="flex items-center gap-2.5">
+<span class="w-3 h-3 rounded-sm bg-[#93A8B8]"></span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Health &amp; Fitness</span>
+<span class="font-label-numeric text-caption text-outline">12%</span>
+</div>
+<span class="font-label-numeric text-body-md font-semibold text-on-surface tnum">Rs. 7,800</span>
+</div>
+</div>
+</div>
+<!-- Mini Trend Footnote -->
+<div class="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between text-caption font-body-sm text-outline">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px] text-[#3F6853]">insights</span>
+                Discretionary expenses are 8.4% lower than August average
+              </span>
+<a class="text-secondary hover:text-primary font-medium hover:underline" href="#full-ledger">View comprehensive ledger →</a>
+</div>
+</div>
+<!-- Right Column (40%): Budget Health Progress Bars -->
+<div class="col-span-12 lg:col-span-5 bg-[#FCFBF8] rounded-xl border border-black/[0.08] shadow-[0_2px_8px_-2px_rgba(11,22,40,0.03)] p-6">
+<div class="flex items-center justify-between pb-4 mb-4 border-b border-black/[0.06]">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-normal">
+                  Budget Health
+                </h2>
+<span class="font-caption text-caption text-on-surface-variant">Active envelope thresholds for September 2026</span>
+</div>
+<span class="font-label-numeric text-caption bg-surface-container px-2 py-0.5 rounded text-outline">4 Active</span>
+</div>
+<!-- Progress Bars Stack -->
+<div class="space-y-5">
+<!-- 1. Food Envelope -->
+<div class="space-y-1.5">
+<div class="flex justify-between items-baseline text-body-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-outline">restaurant</span>
+<span class="font-medium text-on-surface">Food &amp; Groceries</span>
+</div>
+<div class="text-right font-label-numeric text-body-sm tnum">
+<span class="font-semibold text-on-surface">Rs. 11,200</span>
+<span class="text-outline font-normal"> / Rs. 15,000</span>
+<span class="ml-1.5 text-xs text-[#3F6853] font-medium">(74%)</span>
+</div>
+</div>
+<!-- Progress Track -->
+<div class="w-full h-2 rounded-full bg-surface-container overflow-hidden">
+<div class="h-full rounded-full bg-[#5F9277] transition-all duration-500" style="width: 74.6%;"></div>
+</div>
+<div class="flex justify-between text-[11px] font-caption text-outline">
+<span>Normal burn rate</span>
+<span>Rs. 3,800 buffer remains</span>
+</div>
+</div>
+<!-- 2. Transport Envelope -->
+<div class="space-y-1.5">
+<div class="flex justify-between items-baseline text-body-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-outline">directions_subway</span>
+<span class="font-medium text-on-surface">Transport &amp; Commute</span>
+</div>
+<div class="text-right font-label-numeric text-body-sm tnum">
+<span class="font-semibold text-on-surface">Rs. 4,300</span>
+<span class="text-outline font-normal"> / Rs. 10,000</span>
+<span class="ml-1.5 text-xs text-secondary font-medium">(43%)</span>
+</div>
+</div>
+<!-- Progress Track -->
+<div class="w-full h-2 rounded-full bg-surface-container overflow-hidden">
+<div class="h-full rounded-full bg-[#508E8C] transition-all duration-500" style="width: 43%;"></div>
+</div>
+<div class="flex justify-between text-[11px] font-caption text-outline">
+<span>Well contained</span>
+<span>Rs. 5,700 available</span>
+</div>
+</div>
+<!-- 3. Shopping & Lifestyle (Alert State) -->
+<div class="space-y-1.5">
+<div class="flex justify-between items-baseline text-body-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-[#C48858]">shopping_bag</span>
+<span class="font-medium text-on-surface">Shopping &amp; Gear</span>
+</div>
+<div class="text-right font-label-numeric text-body-sm tnum">
+<span class="font-semibold text-error">Rs. 18,500</span>
+<span class="text-outline font-normal"> / Rs. 20,000</span>
+<span class="ml-1.5 text-xs text-error font-medium">(92%)</span>
+</div>
+</div>
+<!-- Progress Track -->
+<div class="w-full h-2 rounded-full bg-surface-container overflow-hidden">
+<div class="h-full rounded-full bg-[#C76D68] transition-all duration-500" style="width: 92.5%;"></div>
+</div>
+<div class="flex justify-between text-[11px] font-caption">
+<span class="text-error flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">warning</span> Approaching limit
+                  </span>
+<span class="text-outline">Rs. 1,500 runway</span>
+</div>
+</div>
+<!-- 4. Bills & Utilities -->
+<div class="space-y-1.5">
+<div class="flex justify-between items-baseline text-body-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-outline">bolt</span>
+<span class="font-medium text-on-surface">Bills &amp; Utilities</span>
+</div>
+<div class="text-right font-label-numeric text-body-sm tnum">
+<span class="font-semibold text-on-surface">Rs. 8,200</span>
+<span class="text-outline font-normal"> / Rs. 9,000</span>
+<span class="ml-1.5 text-xs text-on-surface-variant font-medium">(91%)</span>
+</div>
+</div>
+<!-- Progress Track -->
+<div class="w-full h-2 rounded-full bg-surface-container overflow-hidden">
+<div class="h-full rounded-full bg-secondary transition-all duration-500" style="width: 91.1%;"></div>
+</div>
+<div class="flex justify-between text-[11px] font-caption text-outline">
+<span>Recurring debits completed</span>
+<span>Rs. 800 balance</span>
+</div>
+</div>
+</div>
+<div class="mt-5 pt-3 border-t border-black/[0.04] text-center">
+<button class="text-caption font-body-sm text-secondary hover:text-primary font-medium hover:underline inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">tune</span> Adjust Category Allocations
+              </button>
+</div>
+</div>
+</section>
+<!-- 6. BOTTOM OPERATIONAL TRIO (Daily Life Synchronization) -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Card A: Today's Tasks -->
+<div class="bg-[#FCFBF8] rounded-xl border border-black/[0.08] shadow-[0_2px_8px_-2px_rgba(11,22,40,0.03)] p-5 flex flex-col justify-between">
+<div>
+<!-- Header -->
+<div class="flex items-center justify-between pb-3 mb-3 border-b border-black/[0.06]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="check_circle">check_circle</span>
+<h3 class="font-headline-sm text-[17px] text-on-surface font-normal">Today's Focus</h3>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-numeric text-[11px] px-2 py-0.5 rounded bg-surface-container text-on-surface-variant">3 / 5 Done</span>
+<div class="w-5 h-5 relative flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<circle cx="18" cy="18" fill="none" r="14" stroke="#EFECE2" stroke-width="4"></circle>
+<circle cx="18" cy="18" fill="none" r="14" stroke="#40617E" stroke-dasharray="88" stroke-dashoffset="35" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+</div>
+</div>
+</div>
+<!-- Interactive Checklist -->
+<div class="space-y-2.5">
+<!-- Completed Task 1 -->
+<label class="flex items-start gap-2.5 p-2 rounded hover:bg-surface-container/50 cursor-pointer transition-colors group">
+<input checked="" class="mt-0.5 w-4 h-4 rounded border-outline-variant/60 text-primary-container focus:ring-0 focus:ring-offset-0 transition" type="checkbox"/>
+<div class="flex-1 min-w-0">
+<span class="font-body-sm text-body-sm text-outline line-through leading-tight block">Complete API integration</span>
+<span class="font-caption text-[10px] text-outline">Work · High</span>
+</div>
+</label>
+<!-- Completed Task 2 -->
+<label class="flex items-start gap-2.5 p-2 rounded hover:bg-surface-container/50 cursor-pointer transition-colors group">
+<input checked="" class="mt-0.5 w-4 h-4 rounded border-outline-variant/60 text-primary-container focus:ring-0 focus:ring-offset-0 transition" type="checkbox"/>
+<div class="flex-1 min-w-0">
+<span class="font-body-sm text-body-sm text-outline line-through leading-tight block">Morning gym session</span>
+<span class="font-caption text-[10px] text-outline">Personal · Health</span>
+</div>
+</label>
+<!-- Completed Task 3 -->
+<label class="flex items-start gap-2.5 p-2 rounded hover:bg-surface-container/50 cursor-pointer transition-colors group">
+<input checked="" class="mt-0.5 w-4 h-4 rounded border-outline-variant/60 text-primary-container focus:ring-0 focus:ring-offset-0 transition" type="checkbox"/>
+<div class="flex-1 min-w-0">
+<span class="font-body-sm text-body-sm text-outline line-through leading-tight block">Review monthly investment yield</span>
+<span class="font-caption text-[10px] text-outline">Finance · Portfolio</span>
+</div>
+</label>
+<!-- Pending Task 4 -->
+<label class="flex items-start gap-2.5 p-2 rounded hover:bg-surface-container cursor-pointer transition-colors group">
+<input class="mt-0.5 w-4 h-4 rounded border-outline text-primary-container focus:ring-0 focus:ring-offset-0 transition" type="checkbox"/>
+<div class="flex-1 min-w-0">
+<span class="font-body-sm text-body-sm text-on-surface font-medium leading-tight block">Study TypeScript 5.5 performance notes</span>
+<span class="font-caption text-[10px] text-secondary font-medium">Learning · Medium</span>
+</div>
+</label>
+<!-- Pending Task 5 -->
+<label class="flex items-start gap-2.5 p-2 rounded hover:bg-surface-container cursor-pointer transition-colors group">
+<input class="mt-0.5 w-4 h-4 rounded border-outline text-primary-container focus:ring-0 focus:ring-offset-0 transition" type="checkbox"/>
+<div class="flex-1 min-w-0">
+<span class="font-body-sm text-body-sm text-on-surface font-medium leading-tight block">Weekly financial reconciliation</span>
+<span class="font-caption text-[10px] text-[#8C3F3B] font-medium">Finance · Due 6:00 PM</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Footer Action -->
+<div class="pt-3 mt-2 border-t border-black/[0.04]">
+<button class="w-full text-center py-1 font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded transition-colors flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[16px]">add</span> Add new task
+              </button>
+</div>
+</div>
+<!-- Card B: Today's Itemized Spending -->
+<div class="bg-[#FCFBF8] rounded-xl border border-black/[0.08] shadow-[0_2px_8px_-2px_rgba(11,22,40,0.03)] p-5 flex flex-col justify-between">
+<div>
+<!-- Header -->
+<div class="flex items-center justify-between pb-3 mb-3 border-b border-black/[0.06]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[20px]" data-icon="receipt_long">receipt_long</span>
+<h3 class="font-headline-sm text-[17px] text-on-surface font-normal">Today's Debits</h3>
+</div>
+<span class="font-label-numeric text-[13px] font-semibold text-on-surface tnum">Total: Rs. 1,300</span>
+</div>
+<!-- Itemized List -->
+<div class="space-y-3">
+<!-- Debit 1 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container/40 border border-black/[0.03]">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[18px]">local_cafe</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-medium text-on-surface leading-tight">Blue Tokai Coffee &amp; Lunch</span>
+<span class="font-caption text-caption text-outline">Food · Cash wallet</span>
+</div>
+</div>
+<span class="font-label-numeric text-body-md font-semibold text-on-surface tnum">Rs. 850</span>
+</div>
+<!-- Debit 2 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container/40 border border-black/[0.03]">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[18px]">local_taxi</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-medium text-on-surface leading-tight">Metro &amp; Uber Cab</span>
+<span class="font-caption text-caption text-outline">Transit · HDFC Bank</span>
+</div>
+</div>
+<span class="font-label-numeric text-body-md font-semibold text-on-surface tnum">Rs. 300</span>
+</div>
+<!-- Debit 3 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container/40 border border-black/[0.03]">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[18px]">menu_book</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-medium text-on-surface leading-tight">Technical Publication Sub</span>
+<span class="font-caption text-caption text-outline">Books · Amex Platinum</span>
+</div>
+</div>
+<span class="font-label-numeric text-body-md font-semibold text-on-surface tnum">Rs. 150</span>
+</div>
+</div>
+</div>
+<!-- Footer Quick Link -->
+<div class="pt-3 mt-2 border-t border-black/[0.04] flex items-center justify-between">
+<span class="font-caption text-caption text-outline">3 recorded transactions</span>
+<button class="font-body-sm text-body-sm text-secondary hover:text-primary font-medium hover:underline inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">add_circle</span> + Log Expense
+              </button>
+</div>
+</div>
+<!-- Card C: Today's Journal & Goal Anchor -->
+<div class="bg-[#FCFBF8] rounded-xl border border-black/[0.08] shadow-[0_2px_8px_-2px_rgba(11,22,40,0.03)] p-5 flex flex-col justify-between">
+<div>
+<!-- Header -->
+<div class="flex items-center justify-between pb-3 mb-3 border-b border-black/[0.06]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[20px]" data-icon="auto_stories">auto_stories</span>
+<h3 class="font-headline-sm text-[17px] text-on-surface font-normal">Mindset &amp; Goal</h3>
+</div>
+<span class="font-caption text-caption text-outline">10:45 AM Entry</span>
+</div>
+<!-- Editorial Journal Note Preview -->
+<div class="p-3 rounded-lg bg-[#F7F5EF] border border-black/[0.04] relative">
+<span class="text-secondary/40 font-headline-lg text-2xl leading-none absolute top-2 left-2">“</span>
+<p class="font-headline-md text-[14px] leading-relaxed italic text-on-surface-variant pl-4">
+                  Today I finally stabilized the core data pipelines. The feeling of financial grounding brings immense creative clarity. Restraint is power.
+                </p>
+</div>
+<!-- Goal Anchor Spotlight -->
+<div class="mt-4 p-3 rounded-lg border border-outline-variant/30 bg-[#FCFBF8]">
+<div class="flex items-center justify-between text-caption mb-1">
+<span class="font-label-caps text-[10px] text-on-surface uppercase tracking-wider font-bold">Annual Target</span>
+<span class="font-label-numeric text-[11px] text-[#3F6853] font-semibold">72% Achieved</span>
+</div>
+<div class="font-body-sm text-body-sm font-semibold text-on-surface">
+                  SAVE Rs. 100,000 RESERVE
+                </div>
+<div class="mt-2 w-full h-1.5 rounded-full bg-surface-container overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 72%;"></div>
+</div>
+<div class="flex justify-between items-center text-[11px] font-caption text-outline mt-1.5">
+<span class="font-label-numeric tnum">Rs. 72,000 recorded</span>
+<span>Target Dec 31</span>
+</div>
+</div>
+</div>
+<!-- Footer Action -->
+<div class="pt-3 mt-2 border-t border-black/[0.04]">
+<a class="w-full text-center py-1 font-body-sm text-body-sm text-secondary hover:text-primary font-medium hover:underline inline-flex items-center justify-center gap-1" href="#journal">
+                Continue writing in Journal →
+              </a>
+</div>
+</div>
+</section>
+</div>
+<!-- END CONTENT CANVAS WRAPPER -->
+</main>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Toggle checkboxes with subtle feedback
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(box => {
+        box.addEventListener('change', (e) => {
+          const labelSpan = e.target.closest('label').querySelector('.text-body-sm');
+          if (e.target.checked) {
+            labelSpan.classList.add('line-through', 'text-outline');
+            labelSpan.classList.remove('text-on-surface', 'font-medium');
+          } else {
+            labelSpan.classList.remove('line-through', 'text-outline');
+            labelSpan.classList.add('text-on-surface', 'font-medium');
+          }
+        });
+      });
+
+      // Simple keyboard shortcut listener simulation
+      window.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          const searchInput = document.querySelector('input[type="text"]');
+          if (searchInput) {
+            searchInput.focus();
+          }
+        }
+      });
+    });
+  </script>
+</body></html>

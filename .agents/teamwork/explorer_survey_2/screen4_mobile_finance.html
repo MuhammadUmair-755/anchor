@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background text-on-surface" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>ANCHOR — Finance &amp; Accounts Command Center</title>
+<!-- Google Fonts: Newsreader, Plus Jakarta Sans, JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "error-container": "#ffdad6",
+            "inverse-on-surface": "#f3f1eb",
+            "on-secondary-fixed": "#001d32",
+            "surface-container-low": "#f5f3ed",
+            "inverse-surface": "#30312d",
+            "surface-variant": "#e4e2dd",
+            "on-error": "#ffffff",
+            "outline-variant": "#c5c6cd",
+            "primary-container": "#111c2e",
+            "surface-dim": "#dcdad4",
+            "primary-fixed": "#d8e3fc",
+            "on-tertiary-fixed": "#00201f",
+            "on-secondary-fixed-variant": "#274a65",
+            "secondary-fixed-dim": "#a8caeb",
+            "secondary": "#40617e",
+            "inverse-primary": "#bcc7df",
+            "on-error-container": "#93000a",
+            "on-surface": "#1b1c18",
+            "surface-container-highest": "#e4e2dd",
+            "primary-fixed-dim": "#bcc7df",
+            "surface-tint": "#545f74",
+            "on-secondary": "#ffffff",
+            "error": "#ba1a1a",
+            "secondary-container": "#bcdeff",
+            "on-background": "#1b1c18",
+            "primary": "#000000",
+            "background": "#fbf9f3",
+            "surface-container": "#f0eee8",
+            "tertiary-fixed-dim": "#93d2cf",
+            "on-secondary-container": "#41627f",
+            "on-surface-variant": "#45474c",
+            "outline": "#75777d",
+            "on-primary-fixed": "#111c2e",
+            "tertiary-container": "#00201f",
+            "tertiary": "#000000",
+            "secondary-fixed": "#cde5ff",
+            "tertiary-fixed": "#afeeec",
+            "on-tertiary-container": "#508e8c",
+            "on-primary": "#ffffff",
+            "on-primary-container": "#7a849b",
+            "on-primary-fixed-variant": "#3d475b",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-high": "#eae8e2",
+            "on-tertiary-fixed-variant": "#00504e",
+            "on-tertiary": "#ffffff",
+            "surface": "#fbf9f3",
+            "surface-bright": "#fbf9f3"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter": "1.5rem",
+            "space-lg": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "gutter-sm": "1rem",
+            "space-md": "1rem",
+            "space-xl": "2.5rem",
+            "margin-sm": "1rem",
+            "margin-lg": "3.5rem",
+            "margin": "2rem",
+            "gutter-lg": "2rem"
+          },
+          "fontFamily": {
+            "body-sm": ["Plus Jakarta Sans"],
+            "label-caps": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "headline-lg": ["Newsreader"],
+            "caption": ["Plus Jakarta Sans"],
+            "display-hero": ["Newsreader"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "display-hero-mobile": ["Newsreader"],
+            "headline-md": ["Newsreader"],
+            "label-numeric": ["JetBrains Mono"],
+            "headline-lg-mobile": ["Newsreader"]
+          },
+          "fontSize": {
+            "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "headline-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.015em", "fontWeight": "400" }],
+            "caption": ["11px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "display-hero": ["56px", { "lineHeight": "64px", "letterSpacing": "-0.02em", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "display-hero-mobile": ["38px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "400" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "label-numeric": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+            "headline-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .font-tabular {
+      font-feature-settings: "tnum" on, "zero" on;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased selection:bg-surface-variant min-h-full flex justify-center">
+<!-- 390px Mobile Viewport Container -->
+<div class="w-full max-w-[390px] bg-background min-h-screen flex flex-col relative pb-28 shadow-2xl">
+<!-- TopAppBar (Execution from Shared Components JSON with semantic mobile fidelity) -->
+<header class="sticky top-0 z-40 bg-surface/95 backdrop-blur-md flex justify-between items-center w-full px-gutter-sm h-14 max-w-full mx-auto shadow-sm">
+<!-- Leading Brand & Icon -->
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-[20px] font-medium" data-icon="anchor">anchor</span>
+<span class="font-headline-md text-headline-md tracking-tight font-medium text-primary">ANCHOR</span>
+</div>
+<!-- Reconciled Pill Badge & Contextual Actions -->
+<div class="flex items-center space-x-1.5">
+<div class="flex items-center bg-surface-container-high px-2 py-1 rounded-lg">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary mr-1.5 animate-pulse"></span>
+<span class="font-caption text-caption text-on-surface-variant font-medium">Reconciled 10m ago</span>
+</div>
+<!-- Trailing action icons: CSV Export & Filter -->
+<button aria-label="Export CSV" class="w-9 h-9 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-[0.98]" title="Export CSV">
+<span class="material-symbols-outlined text-[19px]" data-icon="file_download">file_download</span>
+</button>
+<button aria-label="Filter Ledger" class="w-9 h-9 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-[0.98]" title="Filter Ledger">
+<span class="material-symbols-outlined text-[19px]" data-icon="tune">tune</span>
+</button>
+</div>
+</header>
+<!-- Main Mobile Content Canvas -->
+<main class="flex-1 px-gutter-sm pt-3 flex flex-col gap-space-lg">
+<!-- 1. Editorial Header & Net Capital Anchor -->
+<section class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-on-surface-variant tracking-wider">EXECUTIVE LEDGER · Q3 FISCAL CYCLE</span>
+<span class="font-label-numeric text-caption text-on-surface-variant font-tabular">INR (₹)</span>
+</div>
+<div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-normal tracking-tight text-primary leading-tight">Finance</h1>
+<p class="font-headline-md text-[15px] italic text-on-surface-variant/90 leading-snug mt-1">
+            “Know where your money goes. Control where it goes next.”
+          </p>
+</div>
+<!-- Net Capital Summary Banner -->
+<div class="mt-2 bg-primary-container text-on-primary rounded-xl p-4 shadow-sm border border-primary/20 relative overflow-hidden">
+<div class="absolute -right-6 -bottom-6 opacity-5 pointer-events-none">
+<span class="material-symbols-outlined text-[120px]" data-icon="account_balance">account_balance</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-[10px] tracking-widest text-on-primary-container font-semibold">TOTAL NET CAPITAL</span>
+<span class="font-label-caps text-[10px] bg-white/10 text-inverse-primary px-2 py-0.5 rounded">SOLVENT</span>
+</div>
+<div class="mt-1 flex items-baseline justify-between">
+<div class="font-label-numeric text-2xl font-bold tracking-tight text-on-primary font-tabular">
+              Rs. 117,200
+            </div>
+<div class="flex items-center font-label-numeric text-caption text-[#84cca0] font-tabular">
+<span class="material-symbols-outlined text-xs mr-0.5" data-icon="trending_up">trending_up</span>
+              +8.4% MoM
+            </div>
+</div>
+</div>
+</section>
+<!-- 2. Horizontal Liquidity & Accounts Stack (Fluid Scroll Tray) -->
+<section class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant tracking-wider">ACCOUNTS &amp; LIQUIDITY</h2>
+<span class="font-caption text-caption text-on-surface-variant">4 Anchors active</span>
+</div>
+<!-- Horizontal Swipeable Cards Track -->
+<div class="flex gap-3 overflow-x-auto no-scrollbar -mx-gutter-sm px-gutter-sm py-1 snap-x snap-mandatory">
+<!-- Card 1: Operating Bank -->
+<div class="min-w-[210px] bg-surface-container-lowest rounded-xl p-3.5 border border-on-surface/10 shadow-sm flex flex-col justify-between snap-start">
+<div>
+<div class="flex items-center justify-between text-on-surface-variant mb-1.5">
+<span class="font-body-sm text-caption font-semibold flex items-center gap-1 text-primary">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+                  Operating Bank
+                </span>
+<span class="font-label-numeric text-[10px] text-on-surface-variant/70 font-tabular">HDFC ••4092</span>
+</div>
+<div class="font-label-numeric text-lg font-bold text-primary tracking-tight font-tabular">
+                Rs. 72,500
+              </div>
+</div>
+<div class="mt-3 pt-2 border-t border-surface-variant/60 flex items-center justify-between text-on-surface-variant">
+<span class="font-caption text-[11px]">Period Inflow</span>
+<span class="font-label-numeric text-[11px] text-[#3F6853] font-semibold font-tabular">+Rs. 120k</span>
+</div>
+</div>
+<!-- Card 2: Physical Vault -->
+<div class="min-w-[200px] bg-surface-container-lowest rounded-xl p-3.5 border border-on-surface/10 shadow-sm flex flex-col justify-between snap-start">
+<div>
+<div class="flex items-center justify-between text-on-surface-variant mb-1.5">
+<span class="font-body-sm text-caption font-semibold flex items-center gap-1 text-primary">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+                  Physical Vault
+                </span>
+<span class="font-label-caps text-[9px] bg-surface-container px-1.5 py-0.5 rounded text-on-surface-variant">Liquid</span>
+</div>
+<div class="font-label-numeric text-lg font-bold text-primary tracking-tight font-tabular">
+                Rs. 15,000
+              </div>
+</div>
+<div class="mt-3 pt-2 border-t border-surface-variant/60 flex items-center justify-between text-on-surface-variant">
+<span class="font-caption text-[11px]">Storage</span>
+<span class="font-body-sm text-[11px] font-medium text-on-surface">Secure Safe A</span>
+</div>
+</div>
+<!-- Card 3: High-Yield Vault -->
+<div class="min-w-[200px] bg-surface-container-lowest rounded-xl p-3.5 border border-on-surface/10 shadow-sm flex flex-col justify-between snap-start">
+<div>
+<div class="flex items-center justify-between text-on-surface-variant mb-1.5">
+<span class="font-body-sm text-caption font-semibold flex items-center gap-1 text-primary">
+<span class="w-2 h-2 rounded-full bg-[#5F9277]"></span>
+                  Treasury Vault
+                </span>
+<span class="font-label-numeric text-[10px] text-[#3F6853] font-semibold bg-[#5F9277]/10 px-1.5 rounded font-tabular">+4.2% APY</span>
+</div>
+<div class="font-label-numeric text-lg font-bold text-primary tracking-tight font-tabular">
+                Rs. 48,200
+              </div>
+</div>
+<div class="mt-3 pt-2 border-t border-surface-variant/60 flex items-center justify-between text-on-surface-variant">
+<span class="font-caption text-[11px]">Yield Tier</span>
+<span class="font-caption text-[11px] font-medium">91-Day T-Bills</span>
+</div>
+</div>
+<!-- Card 4: Amex Platinum -->
+<div class="min-w-[220px] bg-surface-container-lowest rounded-xl p-3.5 border border-on-surface/10 shadow-sm flex flex-col justify-between snap-start">
+<div>
+<div class="flex items-center justify-between text-on-surface-variant mb-1.5">
+<span class="font-body-sm text-caption font-semibold flex items-center gap-1 text-primary">
+<span class="w-2 h-2 rounded-full bg-[#C76D68]"></span>
+                  Amex Platinum
+                </span>
+<span class="font-label-numeric text-[10px] text-on-surface-variant/70 font-tabular">••1042</span>
+</div>
+<div class="font-label-numeric text-lg font-bold text-[#8C3F3B] tracking-tight font-tabular">
+                -Rs. 18,500
+              </div>
+</div>
+<div class="mt-3 pt-2 border-t border-surface-variant/60 flex items-center justify-between text-on-surface-variant">
+<span class="font-caption text-[11px]">12% of 150k limit</span>
+<span class="font-caption text-[11px] font-semibold text-primary">Due Oct 05</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 3. Tap-to-Trigger Action Pill / Quick Action Bar -->
+<section class="grid grid-cols-3 gap-2">
+<button class="flex items-center justify-center gap-1.5 py-2.5 px-2 bg-surface-container-lowest rounded-lg border border-on-surface/10 hover:bg-surface-container-high transition-colors active:scale-[0.98] shadow-sm">
+<span class="material-symbols-outlined text-base text-primary" data-icon="add_circle">add_circle</span>
+<span class="font-body-sm text-[12px] font-semibold text-primary">Log Expense</span>
+</button>
+<button class="flex items-center justify-center gap-1.5 py-2.5 px-2 bg-surface-container-lowest rounded-lg border border-on-surface/10 hover:bg-surface-container-high transition-colors active:scale-[0.98] shadow-sm">
+<span class="material-symbols-outlined text-base text-[#3F6853]" data-icon="arrow_circle_down">arrow_circle_down</span>
+<span class="font-body-sm text-[12px] font-semibold text-primary">Log Income</span>
+</button>
+<button class="flex items-center justify-center gap-1.5 py-2.5 px-2 bg-surface-container-lowest rounded-lg border border-on-surface/10 hover:bg-surface-container-high transition-colors active:scale-[0.98] shadow-sm">
+<span class="material-symbols-outlined text-base text-secondary" data-icon="sync_alt">sync_alt</span>
+<span class="font-body-sm text-[12px] font-semibold text-primary">Move Funds</span>
+</button>
+</section>
+<!-- 4. Cashflow Velocity Card (Bento Ledger Inset) -->
+<section class="bg-surface-container-lowest rounded-xl p-4 border border-on-surface/10 shadow-sm flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-on-surface-variant tracking-wider">CASHFLOW VELOCITY · MTD</span>
+<span class="font-label-caps text-[10px] bg-secondary-container/50 text-on-secondary-container px-2 py-0.5 rounded font-bold">69.4% RETENTION</span>
+</div>
+<!-- Inflow vs Outflow Dual Columns -->
+<div class="grid grid-cols-2 gap-3 pt-1">
+<div class="bg-surface-container/50 rounded-lg p-2.5 border border-on-surface/5">
+<span class="font-caption text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-[#3F6853]" data-icon="arrow_downward">arrow_downward</span>
+              Inflow
+            </span>
+<div class="font-label-numeric text-base font-bold text-primary mt-0.5 font-tabular">
+              Rs. 165,000
+            </div>
+</div>
+<div class="bg-surface-container/50 rounded-lg p-2.5 border border-on-surface/5">
+<span class="font-caption text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-[#8C3F3B]" data-icon="arrow_upward">arrow_upward</span>
+              Outflow
+            </span>
+<div class="font-label-numeric text-base font-bold text-primary mt-0.5 font-tabular">
+              Rs. 50,420
+            </div>
+</div>
+</div>
+<!-- Progress Bar Retention Gauge -->
+<div class="w-full bg-surface-variant rounded-full h-2 overflow-hidden flex">
+<div class="bg-primary h-full transition-all duration-300" style="width: 69.4%"></div>
+<div class="bg-[#C76D68] h-full transition-all duration-300" style="width: 30.6%"></div>
+</div>
+<!-- Velocity Alert Pill -->
+<div class="flex items-center gap-2 bg-error-container/40 text-on-error-container p-2 rounded-lg text-xs">
+<span class="material-symbols-outlined text-base flex-shrink-0 text-[#8C3F3B]" data-icon="crisis_alert">crisis_alert</span>
+<span class="font-body-sm text-[11px] leading-tight font-medium">Velocity alert: <span class="font-semibold">Dining out pace +18%</span> vs Aug baseline.</span>
+</div>
+</section>
+<!-- 5. The Ledger & Cashflow (Chronological Feed) -->
+<section class="flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-[16px] text-primary font-semibold">Ledger Entries</h2>
+<button class="font-caption text-caption text-secondary font-semibold hover:underline">View Ledger</button>
+</div>
+<!-- Segmented Filter Pills -->
+<div class="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+<button class="px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-primary text-on-primary whitespace-nowrap shadow-xs">
+            All
+          </button>
+<button class="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-surface-container text-on-surface-variant hover:bg-surface-variant whitespace-nowrap transition-colors">
+            Food &amp; Dining
+          </button>
+<button class="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-surface-container text-on-surface-variant hover:bg-surface-variant whitespace-nowrap transition-colors">
+            Transport
+          </button>
+<button class="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-surface-container text-on-surface-variant hover:bg-surface-variant whitespace-nowrap transition-colors">
+            Shopping
+          </button>
+<button class="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-surface-container text-on-surface-variant hover:bg-surface-variant whitespace-nowrap transition-colors">
+            Inflows
+          </button>
+</div>
+<!-- Date Group: Today (Sep 11) -->
+<div class="flex flex-col gap-2 mt-1">
+<div class="flex items-center justify-between py-1 border-b border-on-surface/10">
+<span class="font-label-caps text-label-caps text-on-surface-variant font-bold tracking-wider">TODAY · SEP 11</span>
+<span class="font-label-numeric text-xs font-semibold text-[#8C3F3B] font-tabular">Net -Rs. 1,300</span>
+</div>
+<!-- Transaction 1: Blue Tokai -->
+<div class="flex items-center justify-between p-3 bg-surface-container-lowest rounded-xl border border-on-surface/5 hover:border-on-surface/20 transition-all">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-[18px]" data-icon="coffee">coffee</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-[13px] font-semibold text-primary leading-snug">Blue Tokai Coffee &amp; Lunch</span>
+<span class="font-caption text-[11px] text-on-surface-variant leading-none mt-0.5">Food &amp; Dining · Cash Wallet · 13:42</span>
+</div>
+</div>
+<div class="font-label-numeric text-[13px] font-bold text-[#8C3F3B] font-tabular">
+              -Rs. 850
+            </div>
+</div>
+<!-- Transaction 2: Metro & Uber Black -->
+<div class="flex items-center justify-between p-3 bg-surface-container-lowest rounded-xl border border-on-surface/5 hover:border-on-surface/20 transition-all">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-[18px]" data-icon="directions_car">directions_car</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-[13px] font-semibold text-primary leading-snug">Metro &amp; Uber Black</span>
+<span class="font-caption text-[11px] text-on-surface-variant leading-none mt-0.5">Transport · Amex ••1042 · 10:15</span>
+</div>
+</div>
+<div class="font-label-numeric text-[13px] font-bold text-[#8C3F3B] font-tabular">
+              -Rs. 300
+            </div>
+</div>
+<!-- Transaction 3: Technical Pub Annual -->
+<div class="flex items-center justify-between p-3 bg-surface-container-lowest rounded-xl border border-on-surface/5 hover:border-on-surface/20 transition-all">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-[18px]" data-icon="menu_book">menu_book</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-[13px] font-semibold text-primary leading-snug">Technical Pub Annual</span>
+<span class="font-caption text-[11px] text-on-surface-variant leading-none mt-0.5">Knowledge · Amex ••1042 · 08:30</span>
+</div>
+</div>
+<div class="font-label-numeric text-[13px] font-bold text-[#8C3F3B] font-tabular">
+              -Rs. 150
+            </div>
+</div>
+</div>
+<!-- Date Group: Yesterday (Sep 10) -->
+<div class="flex flex-col gap-2 mt-2">
+<div class="flex items-center justify-between py-1 border-b border-on-surface/10">
+<span class="font-label-caps text-label-caps text-on-surface-variant font-bold tracking-wider">YESTERDAY · SEP 10</span>
+<span class="font-label-numeric text-xs font-semibold text-[#3F6853] font-tabular">Net +Rs. 41,580</span>
+</div>
+<!-- Transaction 4: Nature's Basket -->
+<div class="flex items-center justify-between p-3 bg-surface-container-lowest rounded-xl border border-on-surface/5 hover:border-on-surface/20 transition-all">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-[18px]" data-icon="shopping_basket">shopping_basket</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-[13px] font-semibold text-primary leading-snug">Nature's Basket Provisions</span>
+<span class="font-caption text-[11px] text-on-surface-variant leading-none mt-0.5">Groceries · HDFC ••4092 · 19:10</span>
+</div>
+</div>
+<div class="font-label-numeric text-[13px] font-bold text-[#8C3F3B] font-tabular">
+              -Rs. 3,420
+            </div>
+</div>
+<!-- Transaction 5: Quarterly Advisory Retainer (Inflow) -->
+<div class="flex items-center justify-between p-3 bg-surface-container-lowest rounded-xl border border-on-surface/5 hover:border-on-surface/20 transition-all">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-[#5F9277]/15 flex items-center justify-center text-[#3F6853] flex-shrink-0">
+<span class="material-symbols-outlined text-[18px]" data-icon="payments">payments</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-body-md text-[13px] font-semibold text-primary leading-snug">Quarterly Advisory Retainer</span>
+<span class="font-label-caps text-[9px] bg-[#5F9277]/20 text-[#3F6853] px-1 py-0.2 rounded font-bold">INFLOW</span>
+</div>
+<span class="font-caption text-[11px] text-on-surface-variant leading-none mt-0.5">Enterprise Client · HDFC · 11:20</span>
+</div>
+</div>
+<div class="font-label-numeric text-[13px] font-bold text-[#3F6853] font-tabular">
+              +Rs. 45,000
+            </div>
+</div>
+</div>
+<!-- Recurring Obligations Banner -->
+<div class="mt-2 bg-surface-container p-3 rounded-xl border border-on-surface/10 flex items-center gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-xl flex-shrink-0" data-icon="update">update</span>
+<div class="flex flex-col">
+<span class="font-caption text-[11px] text-on-surface-variant font-medium">Recurring Obligations</span>
+<span class="font-label-numeric text-xs font-semibold text-primary font-tabular">Rs. 31,500/mo <span class="font-body-sm text-caption text-on-surface-variant font-normal">(AWS, Bloomberg, Lease)</span></span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Shared Components JSON execution) -->
+<!-- Destination 5 items: Home, Finance, Create (Floating Center Action), Tasks, Profile -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-sm h-16 pb-safe bg-surface-container-lowest shadow-sm max-w-[390px] mx-auto right-0">
+<!-- 1. Home (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant font-normal hover:text-primary transition-colors duration-150 active:scale-95 min-h-[44px] min-w-[44px]" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="home">home</span>
+<span class="font-label-caps text-label-caps mt-0.5">Home</span>
+</a>
+<!-- 2. Finance (Active - Exact Semantic Match) -->
+<a class="flex flex-col items-center justify-center text-primary font-semibold hover:text-primary transition-colors duration-150 active:scale-95 min-h-[44px] min-w-[44px]" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="account_balance" data-weight="fill" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+<span class="font-label-caps text-label-caps mt-0.5">Finance</span>
+</a>
+<!-- 3. Create ('+' Quick Entry Center Floating Pill) -->
+<div class="flex items-center justify-center -mt-4 min-h-[44px] min-w-[44px]">
+<button aria-label="Create Quick Entry" class="w-12 h-12 rounded-full bg-primary-container text-on-primary flex items-center justify-center shadow-lg hover:bg-black transition-all active:scale-90 border border-white/20">
+<span class="material-symbols-outlined text-[24px]" data-icon="add">add</span>
+</button>
+</div>
+<!-- 4. Tasks (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant font-normal hover:text-primary transition-colors duration-150 active:scale-95 min-h-[44px] min-w-[44px]" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="check_circle">check_circle</span>
+<span class="font-label-caps text-label-caps mt-0.5">Tasks</span>
+</a>
+<!-- 5. Profile (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant font-normal hover:text-primary transition-colors duration-150 active:scale-95 min-h-[44px] min-w-[44px]" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="person">person</span>
+<span class="font-label-caps text-label-caps mt-0.5">Profile</span>
+</a>
+</nav>
+</div>
+</body></html>

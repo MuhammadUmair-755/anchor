@@ -1,0 +1,40 @@
+[   22815ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/:0
+[   23402ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/node_modules_react-dom_0kla17-._.js:15093
+[   23691ms] Error: Publishable key not valid (expected format: pk_test_... or pk_live_...).
+
+To create a new Clerk app, run:
+npx clerk@latest init
+
+To use an existing Clerk app, run:
+npx clerk@latest link
+npx clerk@latest env pull
+
+For production keys, run:
+npx clerk@latest env pull --instance prod
+
+Or copy keys from https://dashboard.clerk.com/~/api-keys into your .env file.
+    at parsePublishableKey (file://E:\anchor\.next\dev\server\chunks\node_modules_@clerk_shared_dist_1ktj-9e._.js:2750:60)
+    at assertValidPublishableKey (file://E:\anchor\.next\dev\server\chunks\node_modules_@clerk_backend_dist_0c91mzo._.js:518:179)
+    at AuthenticateContext.initPublishableKeyValues (file://E:\anchor\.next\dev\server\chunks\node_modules_@clerk_backend_dist_0c91mzo._.js:659:9)
+    at new AuthenticateContext (file://E:\anchor\.next\dev\server\chunks\node_modules_@clerk_backend_dist_0c91mzo._.js:555:18)
+    at createAuthenticateContext (file://E:\anchor\.next\dev\server\chunks\node_modules_@clerk_backend_dist_0c91mzo._.js:761:12)
+    at async authenticateRequest (file://E:\anchor\.next\dev\server\chunks\node_modules_@clerk_backend_dist_0c91mzo._.js:6618:33)
+    at async (file://E:\anchor\.next\dev\server\chunks\node_modules_@clerk_nextjs_dist_esm_1c9b5he._.js:298:38)
+    at async (file://E:\anchor\.next\dev\server\chunks\node_modules_next_11p28fo._.js:6101:20)
+    at async (file://E:\anchor\.next\dev\server\chunks\node_modules_next_11p28fo._.js:13630:28)
+    at async adapter (file://E:\anchor\.next\dev\server\chunks\node_modules_next_11p28fo._.js:13569:16)
+    at async DevServer.runMiddleware (file://E:\anchor\node_modules\next\dist\server\next-server.js:1210:26)
+    at async DevServer.runMiddleware (file://E:\anchor\node_modules\next\dist\server\dev\next-dev-server.js:310:28)
+    at async NextNodeServer.handleCatchallMiddlewareRequest (file://E:\anchor\node_modules\next\dist\server\next-server.js:392:26)
+    at async DevServer.handleRequestImpl (file://E:\anchor\node_modules\next\dist\server\base-server.js:985:28)
+    at async (file://E:\anchor\node_modules\next\dist\server\dev\next-dev-server.js:426:20)
+    at async Span.traceAsyncFn (file://E:\anchor\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (file://E:\anchor\node_modules\next\dist\server\dev\next-dev-server.js:422:24)
+    at async handleRoute (file://E:\anchor\node_modules\next\dist\server\lib\router-utils\resolve-routes.js:369:33)
+    at async resolveRoutes (file://E:\anchor\node_modules\next\dist\server\lib\router-utils\resolve-routes.js:625:28)
+    at async handleRequest (file://E:\anchor\node_modules\next\dist\server\lib\router-server.js:354:96)
+    at async requestHandlerImpl (file://E:\anchor\node_modules\next\dist\server\lib\router-server.js:565:13)
+    at async Server.requestListener (file://E:\anchor\node_modules\next\dist\server\lib\start-server.js:225:13)
+[   23581ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1gdrd03._.js:756
+[   60191ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1gdrd03._.js:756
+[   60256ms] [LOG] [Fast Refresh] done in 173ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1gdrd03._.js:756
