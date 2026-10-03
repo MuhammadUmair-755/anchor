@@ -122,6 +122,9 @@ export default function LedgerSection({
           display: "flex",
           flexDirection: "column",
           gap: 2,
+          minWidth: 0,
+          maxWidth: "100%",
+          overflow: "hidden",
         }}
       >
         <Box
@@ -216,16 +219,20 @@ export default function LedgerSection({
         <Box sx={{ height: "1px", bgcolor: "rgba(17, 28, 46, 0.08)" }} />
 
         {/* Filter Trays: Categories */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minWidth: 0, maxWidth: "100%" }}>
           <Box
             sx={{
               display: "flex",
               alignItems: "center",
               gap: 1,
               overflowX: "auto",
+              maxWidth: "100%",
+              width: "100%",
+              minWidth: 0,
               pb: 0.5,
-              "&::-webkit-scrollbar": { height: 4 },
-              "&::-webkit-scrollbar-thumb": { bgcolor: "rgba(17,28,46,0.1)", borderRadius: 2 },
+              WebkitOverflowScrolling: "touch",
+              scrollbarWidth: "none",
+              "&::-webkit-scrollbar": { display: "none" },
             }}
           >
             <Typography
@@ -238,6 +245,7 @@ export default function LedgerSection({
                 color: "#75777D",
                 mr: 0.5,
                 whiteSpace: "nowrap",
+                flexShrink: 0,
               }}
             >
               Category:
@@ -257,6 +265,7 @@ export default function LedgerSection({
                     fontWeight: isSelected ? 600 : 500,
                     textTransform: "none",
                     whiteSpace: "nowrap",
+                    flexShrink: 0,
                     bgcolor: isSelected ? "#111C2E" : "#F0EEE8",
                     color: isSelected ? "#FFFFFF" : "#45474C",
                     boxShadow: isSelected ? "0 1px 3px rgba(17,28,46,0.15)" : "none",
@@ -275,16 +284,27 @@ export default function LedgerSection({
           <Box
             sx={{
               display: "flex",
-              flexWrap: "wrap",
-              alignItems: "center",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: { xs: "stretch", sm: "center" },
               justifyContent: "space-between",
               gap: 1.5,
               pt: 1,
               borderTop: "1px solid rgba(17, 28, 46, 0.05)",
+              minWidth: 0,
+              maxWidth: "100%",
             }}
           >
             {/* Account Pills */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                gap: 0.75,
+                minWidth: 0,
+                maxWidth: "100%",
+              }}
+            >
               <Typography
                 sx={{
                   fontSize: "11px",
@@ -294,6 +314,7 @@ export default function LedgerSection({
                   letterSpacing: "0.06em",
                   color: "#75777D",
                   mr: 0.5,
+                  whiteSpace: "nowrap",
                 }}
               >
                 Account:
@@ -333,6 +354,10 @@ export default function LedgerSection({
                 bgcolor: "#F0EEE8",
                 p: 0.5,
                 borderRadius: "8px",
+                maxWidth: "100%",
+                overflowX: "auto",
+                flexShrink: 0,
+                alignSelf: { xs: "flex-start", sm: "auto" },
               }}
             >
               {flowTypes.map((ft) => {
@@ -349,6 +374,7 @@ export default function LedgerSection({
                       fontSize: "11px",
                       fontWeight: isSelected ? 600 : 500,
                       textTransform: "none",
+                      whiteSpace: "nowrap",
                       bgcolor: isSelected ? "#FCFBF8" : "transparent",
                       color: isSelected ? "#1B1C18" : "#45474C",
                       boxShadow: isSelected ? "0 1px 2px rgba(17,28,46,0.06)" : "none",

@@ -92,6 +92,7 @@ export default function AddTransactionModal({
         }}
       >
         <Typography
+          component="span"
           sx={{
             fontFamily: "var(--font-plus-jakarta-sans), sans-serif",
             fontSize: "16px",

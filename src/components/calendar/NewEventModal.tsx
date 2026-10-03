@@ -122,6 +122,7 @@ export default function NewEventModal({
             </Box>
             <Box>
               <Typography
+                component="div"
                 variant="h6"
                 sx={{
                   fontFamily: "var(--font-newsreader), Georgia, serif",
@@ -134,6 +135,7 @@ export default function NewEventModal({
                 Log New Entry or Event
               </Typography>
               <Typography
+                component="div"
                 sx={{
                   fontSize: "0.6875rem",
                   color: "#75777D",

@@ -214,7 +214,7 @@ export default function AdjustAllocationsModal({
     >
       <DialogTitle sx={{ pb: 1, display: "flex", alignItems: "center", gap: 1 }}>
         <TuneIcon sx={{ fontSize: 20, color: "#0B1628" }} />
-        <Typography variant="h6" sx={{ fontSize: "1.125rem", fontWeight: 600, color: "#0B1628" }}>
+        <Typography component="span" variant="h6" sx={{ fontSize: "1.125rem", fontWeight: 600, color: "#0B1628" }}>
           Adjust Budget Allocations
         </Typography>
       </DialogTitle>

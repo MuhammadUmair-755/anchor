@@ -108,6 +108,7 @@ export default function AddTaskModal({
       >
         <CheckCircleOutlineIcon sx={{ fontSize: 22, color: "#0B1628" }} />
         <Typography
+          component="span"
           variant="h6"
           sx={{
             fontFamily: "var(--font-newsreader), Georgia, serif",
