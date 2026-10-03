@@ -77,19 +77,22 @@ export default function CalendarMatrix({
         bgcolor: "#FCFBF8",
         border: "1px solid rgba(0, 0, 0, 0.08)",
         borderRadius: "12px",
-        overflow: "hidden",
+        overflowX: numCols > 1 ? "auto" : "hidden",
+        overflowY: "hidden",
         boxShadow: "0 1px 3px rgba(0, 0, 0, 0.02)",
+        WebkitOverflowScrolling: "touch",
       }}
     >
-      {/* Weekday Headers */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${numCols}, 1fr)`,
-          borderBottom: "1px solid rgba(0, 0, 0, 0.08)",
-          bgcolor: "rgba(245, 243, 237, 0.4)",
-        }}
-      >
+      <Box sx={{ minWidth: numCols > 1 ? { xs: 580, sm: "100%" } : "100%" }}>
+        {/* Weekday Headers */}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${numCols}, 1fr)`,
+            borderBottom: "1px solid rgba(0, 0, 0, 0.08)",
+            bgcolor: "rgba(245, 243, 237, 0.4)",
+          }}
+        >
         {displayedWeekdays.map((day) => {
           const isFriday = day === "FRI";
           return (
@@ -510,5 +513,6 @@ export default function CalendarMatrix({
         })}
       </Box>
     </Box>
-  );
+  </Box>
+);
 }

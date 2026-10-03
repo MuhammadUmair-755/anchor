@@ -117,7 +117,7 @@ export default function LedgerSection({
           bgcolor: "#FCFBF8",
           border: "1px solid rgba(17, 28, 46, 0.08)",
           borderRadius: "12px",
-          p: 2.5,
+          p: { xs: 1.5, sm: 2.5 },
           boxShadow: "0 1px 3px rgba(17, 28, 46, 0.03)",
           display: "flex",
           flexDirection: "column",
@@ -395,7 +395,7 @@ export default function LedgerSection({
                 {/* Date Group Header */}
                 <Box
                   sx={{
-                    px: 3,
+                    px: { xs: 1.5, sm: 2.5, md: 3 },
                     py: 1.5,
                     bgcolor: "rgba(245, 243, 237, 0.7)",
                     display: "flex",
@@ -437,8 +437,8 @@ export default function LedgerSection({
                       <Box
                         key={tx.id}
                         sx={{
-                          px: 3,
-                          py: 2,
+                          px: { xs: 1.5, sm: 2.5, md: 3 },
+                          py: { xs: 1.5, sm: 2 },
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
@@ -451,7 +451,7 @@ export default function LedgerSection({
                           },
                         }}
                       >
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1.25, sm: 2 }, minWidth: 0, mr: 1 }}>
                           <Box
                             sx={{
                               width: 36,

@@ -67,20 +67,20 @@ export default function CalendarHeader({
         bgcolor: "rgba(251, 249, 243, 0.95)",
         backdropFilter: "blur(12px)",
         borderBottom: "1px solid rgba(117, 119, 125, 0.18)",
-        px: { xs: 2, sm: 3, md: 4 },
-        py: 1.5,
+        px: { xs: 1.5, sm: 2.5, md: 4 },
+        py: { xs: 1, sm: 1.5 },
         display: "flex",
         flexWrap: "wrap",
         alignItems: "center",
         justifyContent: "space-between",
-        gap: 2,
+        gap: { xs: 1.25, sm: 2 },
         position: "sticky",
         top: 0,
         zIndex: 40,
       }}
     >
       {/* Left: Month Title & Controls */}
-      <Stack direction="row" spacing={2} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+      <Stack direction="row" spacing={{ xs: 1, sm: 2 }} sx={{ alignItems: "center", flexWrap: "wrap", gap: { xs: 1, sm: 1.5 } }}>
         {/* Month Heading & Ledger Badge */}
         <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
           <Typography
@@ -336,12 +336,13 @@ export default function CalendarHeader({
           sx={{
             bgcolor: "#111C2E",
             color: "#FFFFFF",
-            px: 2,
-            py: 0.75,
+            px: { xs: 1.25, sm: 2 },
+            py: { xs: 0.6, sm: 0.75 },
             borderRadius: "8px",
-            fontSize: "0.8125rem",
+            fontSize: { xs: "0.75rem", sm: "0.8125rem" },
             fontWeight: 500,
             textTransform: "none",
+            whiteSpace: "nowrap",
             boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
             "&:hover": {
               bgcolor: "#0B1628",

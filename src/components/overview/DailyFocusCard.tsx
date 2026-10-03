@@ -91,7 +91,7 @@ export default function DailyFocusCard({
         borderRadius: 3,
         border: "1px solid rgba(17, 28, 46, 0.08)",
         boxShadow: "0 2px 8px -2px rgba(11, 22, 40, 0.03)",
-        p: { xs: 2.5, sm: 3 },
+        p: { xs: 1.75, sm: 2.5, md: 3 },
         height: "100%",
         display: "flex",
         flexDirection: "column",

@@ -207,7 +207,7 @@ export default function OverviewPage() {
         mx: "auto",
         display: "flex",
         flexDirection: "column",
-        gap: { xs: 2.5, sm: 3, md: 3.5 },
+        gap: { xs: 2, sm: 2.5, md: 3.5 },
       }}
     >
       {/* 1. PERSISTENT FILTER STRIP */}
@@ -238,7 +238,7 @@ export default function OverviewPage() {
       />
 
       {/* 3. MIDDLE ANALYTICS GRID (Asymmetrical 60/40 Split: Outflow Donut 7-cols, Budget Health 5-cols) */}
-      <Grid container spacing={{ xs: 2.5, md: 3 }} sx={{ alignItems: "stretch" }}>
+      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ alignItems: "stretch" }}>
         {/* Outflow Donut Chart (Desktop 7 cols / 60%) */}
         <Grid size={{ xs: 12, lg: 7 }}>
           <OutflowDonutChart
@@ -258,7 +258,7 @@ export default function OverviewPage() {
       </Grid>
 
       {/* 4. BOTTOM OPERATIONAL TRIO (Daily Focus, Today's Debits, Mindset & Goal) */}
-      <Grid container spacing={{ xs: 2.5, md: 3 }} sx={{ alignItems: "stretch" }}>
+      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ alignItems: "stretch" }}>
         {/* Card A: Today's Focus */}
         <Grid size={{ xs: 12, md: 4 }}>
           <DailyFocusCard

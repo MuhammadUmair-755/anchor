@@ -53,7 +53,7 @@ export default function DayNexusInspector({
         bgcolor: "#FCFBF8",
         border: "1px solid rgba(0, 0, 0, 0.08)",
         borderRadius: "12px",
-        p: { xs: 2.5, sm: 3 },
+        p: { xs: 1.75, sm: 2.5, md: 3 },
         boxShadow: "0 1px 3px rgba(0, 0, 0, 0.02)",
         display: "flex",
         flexDirection: "column",

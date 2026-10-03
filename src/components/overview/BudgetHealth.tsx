@@ -149,7 +149,7 @@ export default function BudgetHealth({
         borderRadius: 3,
         border: "1px solid rgba(17, 28, 46, 0.08)",
         boxShadow: "0 2px 8px -2px rgba(11, 22, 40, 0.03)",
-        p: { xs: 2.5, sm: 3 },
+        p: { xs: 1.75, sm: 2.5, md: 3 },
         height: "100%",
         display: "flex",
         flexDirection: "column",
@@ -216,8 +216,10 @@ export default function BudgetHealth({
               <Box
                 sx={{
                   display: "flex",
+                  flexWrap: "wrap",
                   alignItems: "baseline",
                   justifyContent: "space-between",
+                  gap: 0.5,
                   mb: 0.75,
                 }}
               >
@@ -226,7 +228,7 @@ export default function BudgetHealth({
                   {env.icon}
                   <Typography
                     sx={{
-                      fontSize: "0.8125rem",
+                      fontSize: { xs: "0.75rem", sm: "0.8125rem" },
                       fontWeight: 600,
                       color: "#17202B",
                     }}
@@ -236,11 +238,11 @@ export default function BudgetHealth({
                 </Box>
 
                 {/* Amounts & Percentage Badge */}
-                <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.75 }}>
+                <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5, flexWrap: "wrap" }}>
                   <Typography
                     sx={{
                       fontFamily: "var(--font-jetbrains-mono), monospace",
-                      fontSize: "0.8125rem",
+                      fontSize: { xs: "0.75rem", sm: "0.8125rem" },
                       fontWeight: 600,
                       color: env.isAlert ? "#C76D68" : "#17202B",
                       fontFeatureSettings: '"tnum" on, "zero" on',
@@ -251,7 +253,7 @@ export default function BudgetHealth({
                   <Typography
                     sx={{
                       fontFamily: "var(--font-jetbrains-mono), monospace",
-                      fontSize: "0.75rem",
+                      fontSize: { xs: "0.6875rem", sm: "0.75rem" },
                       color: "#68717C",
                       fontFeatureSettings: '"tnum" on, "zero" on',
                     }}

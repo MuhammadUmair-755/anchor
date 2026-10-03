@@ -51,8 +51,8 @@ export default function LiquidityHero({
         position: "relative",
       }}
     >
-      <CardContent sx={{ p: { xs: 2.5, sm: 3, md: 3.5 }, "&:last-child": { pb: { xs: 2.5, sm: 3, md: 3.5 } } }}>
-        <Grid container spacing={{ xs: 3, lg: 4 }} sx={{ alignItems: "center" }}>
+      <CardContent sx={{ p: { xs: 2, sm: 2.75, md: 3.5 }, "&:last-child": { pb: { xs: 2, sm: 2.75, md: 3.5 } } }}>
+        <Grid container spacing={{ xs: 2.5, lg: 4 }} sx={{ alignItems: "center" }}>
           {/* Left Column (Desktop 5-cols): Total Balance Anchor */}
           <Grid
             size={{ xs: 12, lg: 5 }}
@@ -110,7 +110,7 @@ export default function LiquidityHero({
                 component="span"
                 sx={{
                   fontFamily: "var(--font-jetbrains-mono), monospace",
-                  fontSize: { xs: "2rem", sm: "2.5rem", lg: "2.75rem" },
+                  fontSize: { xs: "1.75rem", sm: "2.25rem", lg: "2.75rem" },
                   lineHeight: 1.1,
                   fontWeight: 600,
                   letterSpacing: "-0.03em",
@@ -157,12 +157,12 @@ export default function LiquidityHero({
 
           {/* Right Column (Desktop 7-cols): 3-Column Sub-Ledger Inset Well */}
           <Grid size={{ xs: 12, lg: 7 }}>
-            <Grid container spacing={2}>
+            <Grid container spacing={{ xs: 1.5, sm: 2 }}>
               {/* Monthly Inflow */}
               <Grid size={{ xs: 12, sm: 4 }}>
                 <Box
                   sx={{
-                    p: 2,
+                    p: { xs: 1.5, sm: 2 },
                     borderRadius: 2,
                     bgcolor: "rgba(247, 245, 239, 0.65)",
                     border: "1px solid rgba(17, 28, 46, 0.05)",
@@ -219,7 +219,7 @@ export default function LiquidityHero({
               <Grid size={{ xs: 12, sm: 4 }}>
                 <Box
                   sx={{
-                    p: 2,
+                    p: { xs: 1.5, sm: 2 },
                     borderRadius: 2,
                     bgcolor: "rgba(247, 245, 239, 0.65)",
                     border: "1px solid rgba(17, 28, 46, 0.05)",
@@ -276,7 +276,7 @@ export default function LiquidityHero({
               <Grid size={{ xs: 12, sm: 4 }}>
                 <Box
                   sx={{
-                    p: 2,
+                    p: { xs: 1.5, sm: 2 },
                     borderRadius: 2,
                     bgcolor: "rgba(247, 245, 239, 0.65)",
                     border: "1px solid rgba(17, 28, 46, 0.05)",

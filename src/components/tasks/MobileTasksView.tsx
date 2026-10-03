@@ -61,9 +61,9 @@ export default function MobileTasksView({
         width: "100%",
         maxWidth: 480,
         mx: "auto",
-        px: { xs: 1.5, sm: 2 },
-        pt: 1,
-        pb: 12, // Clearance for MobileBottomNav + FAB
+        px: { xs: 0, sm: 1 },
+        pt: 0.5,
+        pb: 10, // Clearance for MobileBottomNav + FAB
         display: "flex",
         flexDirection: "column",
         gap: 2.5,

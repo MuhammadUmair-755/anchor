@@ -52,9 +52,9 @@ export default function MobileNotesView({
         width: "100%",
         maxWidth: 600,
         mx: "auto",
-        px: { xs: 1.5, sm: 2 },
-        pt: 1,
-        pb: 12, // Clearance for sticky bottom tray + bottom nav
+        px: { xs: 0, sm: 1 },
+        pt: 0.5,
+        pb: 10, // Clearance for sticky bottom tray + bottom nav
         display: "flex",
         flexDirection: "column",
         gap: 2,

@@ -262,6 +262,23 @@ export default function CalendarPage() {
     }
   };
 
+  const cycleRangeText = React.useMemo(() => {
+    if (activeView === "day") {
+      return "1 Day · Daily Vector Telemetry";
+    }
+    if (activeView === "week") {
+      return "7 Days · Week Cadence Focus";
+    }
+    if (currentMonthKey === "2026-09") {
+      return "30 Days · Week 36 to Week 40";
+    }
+    const [yearStr, monthStr] = currentMonthKey.split("-");
+    const year = parseInt(yearStr, 10);
+    const monthNum = parseInt(monthStr, 10);
+    const daysInMonth = new Date(Date.UTC(year, monthNum, 0)).getUTCDate();
+    return `${daysInMonth} Days · Monthly Cadence`;
+  }, [activeView, currentMonthKey]);
+
   if (loading) {
     return (
       <Box
@@ -298,23 +315,6 @@ export default function CalendarPage() {
       </Box>
     );
   }
-
-  const cycleRangeText = React.useMemo(() => {
-    if (activeView === "day") {
-      return "1 Day · Daily Vector Telemetry";
-    }
-    if (activeView === "week") {
-      return "7 Days · Week Cadence Focus";
-    }
-    if (currentMonthKey === "2026-09") {
-      return "30 Days · Week 36 to Week 40";
-    }
-    const [yearStr, monthStr] = currentMonthKey.split("-");
-    const year = parseInt(yearStr, 10);
-    const monthNum = parseInt(monthStr, 10);
-    const daysInMonth = new Date(Date.UTC(year, monthNum, 0)).getUTCDate();
-    return `${daysInMonth} Days · Monthly Cadence`;
-  }, [activeView, currentMonthKey]);
 
   return (
     <Box
@@ -369,12 +369,13 @@ export default function CalendarPage() {
 
       {/* 2. Main Body Split: 65% Matrix / 35% Inspector & Goals */}
       <Box
-        component="main"
+        component="div"
         sx={{
-          p: { xs: 2, sm: 3, md: 3.5 },
+          px: { xs: 0, sm: 0.5, md: 1 },
+          py: { xs: 1, sm: 1.5, md: 2 },
           display: "grid",
           gridTemplateColumns: { xs: "1fr", xl: "8fr 4fr" },
-          gap: 3,
+          gap: { xs: 2, sm: 2.5, md: 3 },
           maxWidth: 1720,
           width: "100%",
           mx: "auto",

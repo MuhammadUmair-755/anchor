@@ -207,12 +207,12 @@ export default function FinancePage() {
         maxWidth: 1440,
         width: "100%",
         mx: "auto",
-        px: { xs: 2, sm: 4, lg: 6 },
-        pt: { xs: 3, lg: 4 },
-        pb: 8,
+        px: { xs: 0, sm: 1, lg: 2 },
+        pt: { xs: 1, lg: 2 },
+        pb: { xs: 4, lg: 6 },
         display: "flex",
         flexDirection: "column",
-        gap: 4,
+        gap: { xs: 2.5, sm: 3, md: 4 },
       }}
     >
       {/* 1. Top Editorial Header & Philosophy */}
@@ -231,7 +231,7 @@ export default function FinancePage() {
         sx={{
           display: "grid",
           gridTemplateColumns: { xs: "1fr", lg: "2fr 1fr" },
-          gap: 4,
+          gap: { xs: 2.5, sm: 3, md: 4 },
           alignItems: "flex-start",
         }}
       >

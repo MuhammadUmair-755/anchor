@@ -45,7 +45,7 @@ export default function RecurringObligationsCard({
         boxShadow: "0 1px 3px rgba(17, 28, 46, 0.03)",
       }}
     >
-      <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
+      <CardContent sx={{ p: { xs: 1.75, sm: 2.5 }, "&:last-child": { pb: { xs: 1.75, sm: 2.5 } } }}>
         {/* Header */}
         <Box
           sx={{

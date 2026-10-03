@@ -94,7 +94,8 @@ export default function AppShell({ children }: AppShellProps) {
             width: "100%",
             maxWidth: 1440,
             mx: "auto",
-            p: { xs: 2, sm: 3, md: 4 },
+            px: { xs: 1.25, sm: 2.5, md: 3.5, lg: 4 },
+            py: { xs: 1.5, sm: 2.5, md: 3 },
           }}
         >
           {children}

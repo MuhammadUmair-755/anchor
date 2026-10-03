@@ -15,11 +15,8 @@ import AddIcon from "@mui/icons-material/Add";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
-import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
 import EditNoteIcon from "@mui/icons-material/EditNote";
-import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import SettingsIcon from "@mui/icons-material/Settings";
 
 interface MobileNavDrawerProps {
   open: boolean;
@@ -52,29 +49,14 @@ const NAV_ITEMS: NavItem[] = [
     badge: "5",
   },
   {
-    label: "Projects",
-    href: "/projects",
-    icon: <FolderOutlinedIcon sx={{ fontSize: 20 }} />,
-  },
-  {
     label: "Notes",
     href: "/notes",
     icon: <EditNoteIcon sx={{ fontSize: 20 }} />,
   },
   {
-    label: "Goals",
-    href: "/goals",
-    icon: <FlagOutlinedIcon sx={{ fontSize: 20 }} />,
-  },
-  {
     label: "Calendar",
     href: "/calendar",
     icon: <CalendarMonthIcon sx={{ fontSize: 20 }} />,
-  },
-  {
-    label: "Settings",
-    href: "/settings",
-    icon: <SettingsIcon sx={{ fontSize: 20 }} />,
   },
 ];
 

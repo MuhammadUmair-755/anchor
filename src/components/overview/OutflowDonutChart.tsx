@@ -112,7 +112,7 @@ export default function OutflowDonutChart({
         borderRadius: 3,
         border: "1px solid rgba(17, 28, 46, 0.08)",
         boxShadow: "0 2px 8px -2px rgba(11, 22, 40, 0.03)",
-        p: { xs: 2.5, sm: 3 },
+        p: { xs: 1.75, sm: 2.5, md: 3 },
       }}
     >
       <CardContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
@@ -121,7 +121,7 @@ export default function OutflowDonutChart({
           sx={{
             display: "flex",
             flexDirection: { xs: "column", sm: "row" },
-            alignItems: { xs: "flex-start", sm: "center" },
+            alignItems: { xs: "stretch", sm: "center" },
             justifyContent: "space-between",
             pb: 2,
             mb: 2.5,
@@ -167,15 +167,20 @@ export default function OutflowDonutChart({
               p: 0.5,
               borderRadius: 2,
               border: "1px solid rgba(17, 28, 46, 0.08)",
+              width: { xs: "100%", sm: "auto" },
+              display: "flex",
               "& .MuiToggleButtonGroup-grouped": {
                 border: 0,
                 borderRadius: "6px !important",
-                px: 1.5,
-                py: 0.4,
-                fontSize: "0.75rem",
+                flex: { xs: 1, sm: "initial" },
+                px: { xs: 1, sm: 1.5 },
+                py: 0.5,
+                fontSize: { xs: "0.6875rem", sm: "0.75rem" },
                 fontWeight: 500,
                 textTransform: "none",
                 color: "#68717C",
+                textAlign: "center",
+                whiteSpace: "nowrap",
                 "&.Mui-selected": {
                   bgcolor: "#FCFBF8",
                   color: "#0B1628",
@@ -192,7 +197,7 @@ export default function OutflowDonutChart({
 
         {viewMode === "donut" ? (
           /* Visualization: Mathematical Donut SVG + Itemized Breakdown */
-          <Grid container spacing={{ xs: 2.5, sm: 3 }} sx={{ alignItems: "center" }}>
+          <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ alignItems: "center" }}>
             {/* SVG Donut Ring with Center Metrics */}
             <Grid
               size={{ xs: 12, sm: 5 }}
@@ -200,14 +205,14 @@ export default function OutflowDonutChart({
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                py: { xs: 1, sm: 2 },
+                py: { xs: 1.5, sm: 2 },
               }}
             >
               <Box
                 sx={{
                   position: "relative",
-                  width: { xs: 130, sm: 160 },
-                  height: { xs: 130, sm: 160 },
+                  width: { xs: 150, sm: 170 },
+                  height: { xs: 150, sm: 170 },
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -302,7 +307,7 @@ export default function OutflowDonutChart({
 
             {/* Surrounding Category Breakdown Badges */}
             <Grid size={{ xs: 12, sm: 7 }}>
-              <Stack spacing={1}>
+              <Stack spacing={0.75}>
                 {displaySectors.map((sector) => (
                   <Box
                     key={sector.id}
@@ -310,21 +315,22 @@ export default function OutflowDonutChart({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      p: 1.25,
+                      p: { xs: 0.85, sm: 1.25 },
                       borderRadius: 1.5,
                       border: "1px solid transparent",
                       transition: "all 0.15s ease",
+                      gap: 1,
                       "&:hover": {
                         bgcolor: "rgba(240, 238, 232, 0.6)",
                         borderColor: "rgba(17, 28, 46, 0.08)",
                       },
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0, flex: 1 }}>
                       <Box
                         sx={{
-                          width: 12,
-                          height: 12,
+                          width: 10,
+                          height: 10,
                           borderRadius: 0.75,
                           bgcolor: sector.color,
                           flexShrink: 0,
@@ -332,9 +338,12 @@ export default function OutflowDonutChart({
                       />
                       <Typography
                         sx={{
-                          fontSize: "0.8125rem",
+                          fontSize: { xs: "0.75rem", sm: "0.8125rem" },
                           fontWeight: 500,
                           color: "#17202B",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
                         }}
                       >
                         {sector.label}
@@ -344,6 +353,7 @@ export default function OutflowDonutChart({
                           fontFamily: "var(--font-jetbrains-mono), monospace",
                           fontSize: "0.6875rem",
                           color: "#68717C",
+                          flexShrink: 0,
                           fontFeatureSettings: '"tnum" on, "zero" on',
                         }}
                       >
@@ -354,9 +364,10 @@ export default function OutflowDonutChart({
                     <Typography
                       sx={{
                         fontFamily: "var(--font-jetbrains-mono), monospace",
-                        fontSize: "0.8125rem",
+                        fontSize: { xs: "0.75rem", sm: "0.8125rem" },
                         fontWeight: 600,
                         color: "#0B1628",
+                        flexShrink: 0,
                         fontFeatureSettings: '"tnum" on, "zero" on',
                       }}
                     >

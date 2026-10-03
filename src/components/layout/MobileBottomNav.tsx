@@ -9,7 +9,7 @@ import Fab from "@mui/material/Fab";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
-import PersonOutlineIcon from "@mui/icons-material/PersonOutlined";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import AddIcon from "@mui/icons-material/Add";
 
 interface MobileBottomNavProps {
@@ -25,7 +25,7 @@ export default function MobileBottomNav({ onOpenQuickEntry }: MobileBottomNavPro
     if (pathname === "/") return 0;
     if (pathname.startsWith("/finance")) return 1;
     if (pathname.startsWith("/tasks")) return 3;
-    if (pathname.startsWith("/profile") || pathname.startsWith("/settings")) return 4;
+    if (pathname.startsWith("/calendar")) return 4;
     return 0;
   };
 
@@ -44,7 +44,7 @@ export default function MobileBottomNav({ onOpenQuickEntry }: MobileBottomNavPro
         router.push("/tasks");
         break;
       case 4:
-        router.push("/settings");
+        router.push("/calendar");
         break;
       default:
         break;
@@ -116,8 +116,8 @@ export default function MobileBottomNav({ onOpenQuickEntry }: MobileBottomNavPro
           icon={<CheckCircleOutlineIcon sx={{ fontSize: 20 }} />}
         />
         <BottomNavigationAction
-          label="Profile"
-          icon={<PersonOutlineIcon sx={{ fontSize: 20 }} />}
+          label="Calendar"
+          icon={<CalendarMonthIcon sx={{ fontSize: 20 }} />}
         />
       </BottomNavigation>
 

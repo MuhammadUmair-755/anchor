@@ -21,7 +21,7 @@ export default function MatrixTemporalHealthBar({ metrics }: MatrixTemporalHealt
         bgcolor: "#EFECE2",
         border: "1px solid rgba(0, 0, 0, 0.05)",
         borderRadius: "12px",
-        p: { xs: 2, sm: 2.5 },
+        p: { xs: 1.5, sm: 2.25 },
         display: "flex",
         flexWrap: "wrap",
         alignItems: "center",
@@ -68,7 +68,15 @@ export default function MatrixTemporalHealthBar({ metrics }: MatrixTemporalHealt
       </Stack>
 
       {/* Right Metrics: Tasks Resolved & Net Balance MTD */}
-      <Stack direction="row" spacing={{ xs: 3, sm: 4 }} sx={{ alignItems: "center" }}>
+      <Stack
+        direction="row"
+        spacing={{ xs: 2.5, sm: 4 }}
+        sx={{
+          alignItems: "center",
+          width: { xs: "100%", sm: "auto" },
+          justifyContent: { xs: "space-between", sm: "flex-end" },
+        }}
+      >
         {/* Tasks Resolved Metric */}
         <Box sx={{ textAlign: "right" }}>
           <Typography
