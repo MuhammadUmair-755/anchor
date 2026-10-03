@@ -536,8 +536,6 @@ runChallenge('MobileNotesView: Date rail, Mindset card, Editorial card, Micro ob
       activeEntry: mockJournalEntries[0],
       onSelectEntry: () => {},
       onContinueWriting: () => {},
-      onVoiceMemo: () => {},
-      onAttachment: () => {},
       onMoreActions: () => {},
     })
   );
@@ -578,8 +576,6 @@ runChallenge('MobileNotesView: Date rail, Mindset card, Editorial card, Micro ob
 
   // 6. Contextual Sticky Bottom Action Tray
   assert.ok(html.includes('Continue Writing'), 'Must render Continue Writing primary CTA');
-  assert.ok(html.includes('aria-label="Voice memo capture"'), 'Must render Voice memo capture button');
-  assert.ok(html.includes('aria-label="Add attachment"'), 'Must render Add attachment button');
   // Clearance check: sticky tray bottom positioning
   assert.ok(html.includes('position:sticky'), 'Must be positioned sticky');
 });

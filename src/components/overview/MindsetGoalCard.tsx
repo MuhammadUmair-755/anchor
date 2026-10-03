@@ -1,14 +1,12 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import LinearProgress from "@mui/material/LinearProgress";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { MindsetGoalAnchor } from "@/types/models";
 
 export interface MindsetGoalCardProps {
@@ -205,39 +203,6 @@ export default function MindsetGoalCard({
           </Box>
         </Box>
       </CardContent>
-
-      {/* Footer Action */}
-      <Box
-        sx={{
-          mt: 2.5,
-          pt: 1.5,
-          borderTop: "1px solid rgba(17, 28, 46, 0.06)",
-          textAlign: "center",
-        }}
-      >
-        <Box
-          component={Link}
-          href="/#journal"
-          sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 0.5,
-            fontSize: "0.8125rem",
-            fontWeight: 500,
-            color: "#40617E",
-            textDecoration: "none",
-            transition: "all 0.15s ease",
-            "&:hover": {
-              color: "#0B1628",
-              textDecoration: "underline",
-            },
-          }}
-        >
-          <span>Continue writing in Journal</span>
-          <ArrowForwardIcon sx={{ fontSize: 13 }} />
-        </Box>
-      </Box>
     </Card>
   );
 }

@@ -13,7 +13,6 @@ import AddIcon from "@mui/icons-material/Add";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import EventIcon from "@mui/icons-material/Event";
 import CodeIcon from "@mui/icons-material/Code";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import CheckIcon from "@mui/icons-material/Check";
@@ -675,33 +674,15 @@ export default function MobileTasksView({
                   pt: 1.25,
                   borderTop: "1px solid rgba(17, 28, 46, 0.06)",
                   display: "flex",
-                  justifyContent: "space-between",
                   alignItems: "center",
+                  gap: 0.75,
+                  color: "#68717C",
                 }}
               >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, color: "#68717C" }}>
-                  {idx === 0 ? <EventIcon sx={{ fontSize: 16 }} /> : <CodeIcon sx={{ fontSize: 16 }} />}
-                  <Typography sx={{ fontSize: "0.6875rem", color: "#68717C" }}>
-                    {project.nextMilestone}
-                  </Typography>
-                </Box>
-                <Button
-                  size="small"
-                  endIcon={<ChevronRightIcon sx={{ fontSize: 16 }} />}
-                  sx={{
-                    p: 0,
-                    minWidth: "auto",
-                    color: "#0B1628",
-                    fontFamily: "var(--font-plus-jakarta-sans), sans-serif",
-                    fontSize: "0.6875rem",
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                    "&:hover": { bgcolor: "transparent", opacity: 0.8 },
-                  }}
-                >
-                  Open
-                </Button>
+                {idx === 0 ? <EventIcon sx={{ fontSize: 16 }} /> : <CodeIcon sx={{ fontSize: 16 }} />}
+                <Typography sx={{ fontSize: "0.6875rem", color: "#68717C" }}>
+                  {project.nextMilestone}
+                </Typography>
               </Box>
             </Box>
           ))}

@@ -5,7 +5,6 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
 import SyncIcon from "@mui/icons-material/Sync";
 import CloudIcon from "@mui/icons-material/Cloud";
 import TerminalIcon from "@mui/icons-material/Terminal";
@@ -168,23 +167,6 @@ export default function RecurringObligationsCard({
           }}
         >
           <span>All debits tokenized &amp; verified</span>
-          <Button
-            size="small"
-            sx={{
-              p: 0,
-              fontSize: "11px",
-              fontWeight: 600,
-              color: "#1B1C18",
-              textTransform: "none",
-              "&:hover": {
-                color: "#40617E",
-                bgcolor: "transparent",
-                textDecoration: "underline",
-              },
-            }}
-          >
-            Manage →
-          </Button>
         </Box>
       </CardContent>
     </Card>

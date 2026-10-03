@@ -23,8 +23,6 @@ export interface NotesViewProps {
   onExportMarkdown: () => void;
   onPinEntry: () => void;
   onContinueWriting: () => void;
-  onVoiceMemo?: () => void;
-  onAttachment?: () => void;
   consistencyStats?: ConsistencyStats;
   pinnedMaxim?: PinnedMaxim;
   taxonomyTags?: string[];
@@ -40,8 +38,6 @@ export default function NotesView({
   onExportMarkdown,
   onPinEntry,
   onContinueWriting,
-  onVoiceMemo,
-  onAttachment,
   consistencyStats,
   pinnedMaxim,
   taxonomyTags,
@@ -55,8 +51,6 @@ export default function NotesView({
           activeEntry={activeEntry}
           onSelectEntry={onSelectEntry}
           onContinueWriting={onContinueWriting}
-          onVoiceMemo={onVoiceMemo}
-          onAttachment={onAttachment}
           onMoreActions={onExportMarkdown}
         />
       </Box>

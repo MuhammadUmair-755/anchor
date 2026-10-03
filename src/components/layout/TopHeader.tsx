@@ -11,10 +11,8 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import InputBase from "@mui/material/InputBase";
 import Tooltip from "@mui/material/Tooltip";
-import SearchIcon from "@mui/icons-material/Search";
-import NotificationsOutlinedIcon from "@mui/icons-material/NotificationsOutlined";
+import LogoutIcon from "@mui/icons-material/Logout";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
@@ -22,6 +20,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import { useClerk } from "@clerk/nextjs";
 
 interface TopHeaderProps {
   onOpenQuickEntry: (intent?: "spent" | "received" | "moved") => void;
@@ -34,6 +33,15 @@ export default function TopHeader({
 }: TopHeaderProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
+  const { signOut } = useClerk();
+
+  const handleLogout = async () => {
+    try {
+      await signOut({ redirectUrl: "/sign-in" });
+    } catch {
+      window.location.href = "/sign-in";
+    }
+  };
 
   const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -119,83 +127,33 @@ export default function TopHeader({
         </Box>
       </Box>
 
-      {/* Right: Search, Notifications, + Add Entry Flyout */}
+      {/* Right: Logout & + Add Entry Flyout */}
       <Stack direction="row" spacing={{ xs: 1, md: 1.5 }} sx={{ alignItems: "center" }}>
-        {/* Global Search Bar with ⌘K Badge */}
-        <Box
-          sx={{
-            display: { xs: "none", md: "flex" },
-            alignItems: "center",
-            gap: 1,
-            px: 1.5,
-            py: 0.6,
-            bgcolor: "#F5F3ED",
-            borderRadius: 2,
-            border: "1px solid rgba(17, 28, 46, 0.08)",
-            width: { md: 220, lg: 280 },
-            transition: "all 0.15s ease",
-            "&:focus-within": {
-              borderColor: "#0B1628",
-              bgcolor: "#FFFFFF",
-              boxShadow: "0 0 0 2px rgba(11, 22, 40, 0.08)",
-            },
-          }}
-        >
-          <SearchIcon sx={{ fontSize: 18, color: "#68717C" }} />
-          <InputBase
-            placeholder="Search ANCHOR..."
+        {/* Logout Button */}
+        <Tooltip title="Sign out of ANCHOR">
+          <Button
+            variant="outlined"
+            onClick={handleLogout}
+            startIcon={<LogoutIcon sx={{ fontSize: 18 }} />}
             sx={{
-              flex: 1,
-              fontSize: "0.8125rem",
-              color: "#17202B",
-              fontFamily: "var(--font-plus-jakarta-sans), sans-serif",
-            }}
-          />
-          <Box
-            sx={{
-              px: 0.75,
-              py: 0.2,
-              borderRadius: 1,
-              bgcolor: "#FFFFFF",
-              border: "1px solid rgba(17, 28, 46, 0.12)",
-              fontSize: "0.6875rem",
-              fontWeight: 600,
               color: "#68717C",
-              fontFamily: "var(--font-jetbrains-mono), monospace",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-            }}
-          >
-            ⌘K
-          </Box>
-        </Box>
-
-        {/* Notifications Icon Button */}
-        <Tooltip title="Notifications">
-          <IconButton
-            size="small"
-            sx={{
-              width: 40,
-              height: 40,
-              color: "#68717C",
+              borderColor: "rgba(17, 28, 46, 0.12)",
               borderRadius: 2,
-              border: "1px solid rgba(17, 28, 46, 0.08)",
+              px: 1.75,
+              py: 0.6,
+              fontSize: "0.8125rem",
+              fontWeight: 600,
+              textTransform: "none",
+              bgcolor: "#FFFFFF",
               "&:hover": {
-                bgcolor: "rgba(11, 22, 40, 0.04)",
-                color: "#0B1628",
+                bgcolor: "rgba(199, 109, 104, 0.08)",
+                borderColor: "#C76D68",
+                color: "#8C3F3B",
               },
             }}
           >
-            <Badge
-              variant="dot"
-              sx={{
-                "& .MuiBadge-badge": {
-                  bgcolor: "#C76D68",
-                },
-              }}
-            >
-              <NotificationsOutlinedIcon sx={{ fontSize: 20 }} />
-            </Badge>
-          </IconButton>
+            Log Out
+          </Button>
         </Tooltip>
 
         {/* Contextual "+ Add Entry" Button & Dropdown Menu */}

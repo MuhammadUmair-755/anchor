@@ -242,20 +242,6 @@ export default function NotesPage() {
         onExportMarkdown={handleExportMarkdown}
         onPinEntry={handlePinEntry}
         onContinueWriting={() => setWriteModalOpen(true)}
-        onVoiceMemo={() =>
-          setSnackbar({
-            open: true,
-            message: "Voice memo capture ready (simulated)",
-            severity: "info",
-          })
-        }
-        onAttachment={() =>
-          setSnackbar({
-            open: true,
-            message: "Attachment picker triggered (simulated)",
-            severity: "info",
-          })
-        }
         consistencyStats={consistencyStats || undefined}
         pinnedMaxim={pinnedMaxim || undefined}
         taxonomyTags={taxonomyTags}

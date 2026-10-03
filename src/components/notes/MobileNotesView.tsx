@@ -12,8 +12,6 @@ import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
 import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import EditNoteIcon from "@mui/icons-material/EditNote";
-import MicIcon from "@mui/icons-material/Mic";
-import AttachFileIcon from "@mui/icons-material/AttachFile";
 import { JournalEntry } from "@/types/models";
 
 export interface MobileNotesViewProps {
@@ -21,8 +19,6 @@ export interface MobileNotesViewProps {
   activeEntry: JournalEntry;
   onSelectEntry: (id: string) => void;
   onContinueWriting?: () => void;
-  onVoiceMemo?: () => void;
-  onAttachment?: () => void;
   onMoreActions?: () => void;
 }
 
@@ -31,8 +27,6 @@ export default function MobileNotesView({
   activeEntry,
   onSelectEntry,
   onContinueWriting,
-  onVoiceMemo,
-  onAttachment,
   onMoreActions,
 }: MobileNotesViewProps) {
   // 5 Canonical Timeline Date Pills matching Stitch
@@ -583,40 +577,6 @@ export default function MobileNotesView({
           >
             Continue Writing
           </Button>
-
-          <IconButton
-            onClick={onVoiceMemo}
-            aria-label="Voice memo capture"
-            sx={{
-              width: 44,
-              height: 44,
-              borderRadius: 2,
-              bgcolor: "#F5F3ED",
-              border: "1px solid rgba(17, 28, 46, 0.08)",
-              color: "#0B1628",
-              "&:hover": { bgcolor: "#EAE8E2" },
-              "&:active": { transform: "scale(0.95)" },
-            }}
-          >
-            <MicIcon sx={{ fontSize: 20 }} />
-          </IconButton>
-
-          <IconButton
-            onClick={onAttachment}
-            aria-label="Add attachment"
-            sx={{
-              width: 44,
-              height: 44,
-              borderRadius: 2,
-              bgcolor: "#F5F3ED",
-              border: "1px solid rgba(17, 28, 46, 0.08)",
-              color: "#0B1628",
-              "&:hover": { bgcolor: "#EAE8E2" },
-              "&:active": { transform: "scale(0.95)" },
-            }}
-          >
-            <AttachFileIcon sx={{ fontSize: 20 }} />
-          </IconButton>
         </Box>
       </Box>
     </Box>

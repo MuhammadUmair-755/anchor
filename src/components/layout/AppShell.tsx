@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Box from "@mui/material/Box";
 import DesktopSidebar from "./DesktopSidebar";
 import TopHeader from "./TopHeader";
@@ -31,19 +31,6 @@ export default function AppShell({ children }: AppShellProps) {
   const handleToggleSidebar = () => {
     setSidebarCollapsed((prev) => !prev);
   };
-
-  // Keyboard shortcut listener for Command/Ctrl+K or quick actions
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        // Global search shortcut trigger
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
 
   const sidebarWidth = sidebarCollapsed ? 72 : 256;
 
@@ -82,7 +69,6 @@ export default function AppShell({ children }: AppShellProps) {
 
         {/* Mobile Sticky Top Bar */}
         <MobileTopBar
-          onOpenSearch={() => {}}
           onOpenNavDrawer={() => setMobileNavOpen(true)}
         />
 

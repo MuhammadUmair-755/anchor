@@ -4,23 +4,30 @@ import React from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
-import Badge from "@mui/material/Badge";
 import Stack from "@mui/material/Stack";
-import SearchIcon from "@mui/icons-material/Search";
-import NotificationsOutlinedIcon from "@mui/icons-material/NotificationsOutlined";
+import Tooltip from "@mui/material/Tooltip";
 import MenuIcon from "@mui/icons-material/Menu";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { useClerk } from "@clerk/nextjs";
 
 interface MobileTopBarProps {
   systemStatus?: "steady" | "reconciling" | "attention";
-  onOpenSearch?: () => void;
   onOpenNavDrawer?: () => void;
 }
 
 export default function MobileTopBar({
   systemStatus = "steady",
-  onOpenSearch,
   onOpenNavDrawer,
 }: MobileTopBarProps) {
+  const { signOut } = useClerk();
+
+  const handleLogout = async () => {
+    try {
+      await signOut({ redirectUrl: "/sign-in" });
+    } catch {
+      window.location.href = "/sign-in";
+    }
+  };
   return (
     <Box
       component="header"
@@ -118,43 +125,23 @@ export default function MobileTopBar({
         </Box>
       </Box>
 
-      {/* Right Action Icons */}
+      {/* Right Action: Logout */}
       <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-        <IconButton
-          size="small"
-          onClick={onOpenSearch}
-          aria-label="search"
-          sx={{
-            color: "#68717C",
-            width: 36,
-            height: 36,
-            "&:hover": { color: "#0B1628" },
-          }}
-        >
-          <SearchIcon fontSize="small" />
-        </IconButton>
-
-        <IconButton
-          size="small"
-          aria-label="notifications"
-          sx={{
-            color: "#68717C",
-            width: 36,
-            height: 36,
-            "&:hover": { color: "#0B1628" },
-          }}
-        >
-          <Badge
-            variant="dot"
+        <Tooltip title="Log Out">
+          <IconButton
+            size="small"
+            onClick={handleLogout}
+            aria-label="Log Out"
             sx={{
-              "& .MuiBadge-badge": {
-                bgcolor: "#C76D68",
-              },
+              color: "#68717C",
+              width: 36,
+              height: 36,
+              "&:hover": { color: "#8C3F3B", bgcolor: "rgba(199, 109, 104, 0.08)" },
             }}
           >
-            <NotificationsOutlinedIcon fontSize="small" />
-          </Badge>
-        </IconButton>
+            <LogoutIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Stack>
     </Box>
   );
