@@ -171,3 +171,113 @@ Decouples UI views from data storage implementation, prevents accidental in-memo
 ### Impact
 Affects `src/services/`, `src/types/models.ts`, and page data loaders.
 
+---
+
+## Decision 009: Unified Calendar & Goals Nexus Architecture (`/calendar`)
+
+Date: 2026-10-02  
+Status: Accepted  
+
+### Context
+The final remaining screen from Stitch (`https://stitch.withgoogle.com/projects/196342399105692014`, Desktop `1107476226ef43f3ab26357445fb9cba`) is the Unified Calendar & Goals Nexus. It brings together cross-system operational vectors: financial ledger rollups, task completion cadences, journal inscription markers, and persistent sovereign goals tracking.
+
+### Decision
+1. Implement an interactive 5-week 35-cell matrix for September 2026 in `CalendarMatrix.tsx`, highlighted with the Friday, Sep 11 active focus day badge, pulsing indicator, and rollup pills.
+2. Synchronize day cell selections with `DayNexusInspector.tsx` (35% desktop width), supporting real-time interactive task toggling across 5 operational tasks, financial breakdowns, journal quotes, and cadence contribution banners.
+3. Persistent sovereign tracking cards in `SovereignGoalsHub.tsx` tracking Annual Capital Reserve (72%), Next.js 15 Mastery (70%), and Physical Resilience (82%) with native MUI progress meters and milestone calibration via `AdjustMilestonesModal.tsx`.
+4. Dedicated `calendarService.ts` maintaining in-memory state with deep cloning and synthesized inspector generation for arbitrary calendar days.
+5. Strict MUI v9 `slotProps` usage across dialogs (`NewEventModal.tsx`, `AdjustMilestonesModal.tsx`) with zero `any` and 100% test coverage.
+
+### Reason
+Ensures complete fidelity with Google Stitch tokens, seamless navigation connectivity, strict TypeScript safety, and decoupled domain architecture.
+
+### Impact
+Affects `src/app/calendar/`, `src/components/calendar/`, `src/services/calendarService.ts`, and `tests/calendar_service_and_ui.test.ts`.
+
+---
+
+## Decision 010: Adversarial Hardening & Telemetry Synchronization in Calendar Nexus
+
+Date: 2026-10-02  
+Status: Accepted  
+
+### Context
+Adversarial review (Round 1) identified subtle state integrity risks in the Calendar & Goals Nexus:
+1. `addEvent()` invalidated day inspector caches, which wiped out authentic Stitch day inspector datasets on Sep 11 and failed to append new tasks to inspector checklists.
+2. `toggleDayTask()` used a clamped ceiling (`Math.max(allDone, 41)`) that froze the Matrix Temporal Health resolved tasks count at 41 regardless of task toggling.
+3. Milestone slider calibrations updated percentages without recalculating corresponding achieved and gap metrics.
+4. Raw platform-dependent emojis (`⚓`, `🎯`) degraded cross-OS rendering consistency.
+5. CalendarMatrix lacked dynamic responsive adaptation for the Month / Week / Day segmented toggle.
+
+### Decision
+1. Hardened `calendarService.addEvent()` to mutate and append directly to existing inspector datasets instead of evicting them.
+2. Implemented reactive delta tracking in `calendarService.toggleDayTask()` to dynamically increment/decrement `temporalHealth.tasksResolvedCount`.
+3. Added automatic recalculation of achieved and gap metrics in `calendarService.updateGoalProgress()` for all three sovereign goals.
+4. Standardized all icon triggers to native `@mui/icons-material` vector components (`AnchorIcon`, `TrackChangesIcon`).
+5. Enabled dynamic view slicing (`month`, `week`, `day`) in `CalendarMatrix.tsx` and connected the `⌘K` keyboard shortcut listener in `CalendarHeader.tsx`.
+
+### Impact
+Applied across `src/services/calendarService.ts`, `src/components/calendar/`, `src/app/calendar/page.tsx`, and verified by `tests/calendar_reviewer_adversarial.test.ts`.
+
+---
+
+## Decision 011: Adversarial Hardening (Round 2) — Reactive Rollups, Dynamic Month Navigation, & Multi-Task Synthesis
+
+Date: 2026-10-02  
+Status: Accepted  
+
+### Context
+Adversarial review (Round 2) identified eight state synchronization, telemetry, and responsiveness flaws:
+1. Active focus day (Friday Sep 11) in `CalendarMatrix.tsx` hardcoded `-Rs. 1,300` and `3/5 done`, preventing the cell from reflecting toggled tasks or recorded transactions.
+2. `getDayInspectorData` synthesis capped generated task items at 3, causing multi-task days (e.g. Sep 09 with 6 tasks) to lose tasks upon inspection and toggling.
+3. Month navigation (`onPrevMonth` / `onNextMonth`) hardcoded August/October strings and skipped calendar day regeneration.
+4. `NewEventModal` failed to sync its `date` state when opened with a newly selected calendar day.
+5. `CalendarHeader` hid segmented view toggles on mobile screens, blocking access to Week and Day views.
+6. `CalendarMatrix` 7-column layout lacked mobile text abbreviations and cell overflow handling.
+7. `DayNexusInspector` ledger items used unconstrained dynamic columns squishing cards into thin slivers on multiple additions.
+8. `DayNexusInspector` omitted the `+` sign for positive ledger totals.
+
+### Decision
+1. Connected Friday Sep 11 spend pill and task rollup to `day.financeAmount`, `day.tasksDone`, and `day.tasksTotal`.
+2. Expanded synthesized day inspector task generation to generate the full array of `tasksTotal` items.
+3. Implemented dynamic month grid generation in `calendarService.getCalendarDays()` and genuine step navigation in `CalendarPage.tsx`.
+4. Added `useEffect` in `NewEventModal.tsx` to synchronize `date` state whenever `open` or `defaultDate` updates.
+5. Displayed segmented view toggle across all viewports with responsive font sizes and padding.
+6. Added responsive mobile text formatting and overflow protection to `CalendarMatrix.tsx`.
+7. Applied responsive wrapping columns (`repeat(auto-fit, minmax(90px, 1fr))` / `repeat(3, 1fr)`) to `DayNexusInspector.tsx` ledger cards.
+8. Updated `formatLedgerAmount` to prepend `+` for positive balances.
+
+### Impact
+Affects `src/services/calendarService.ts`, `src/components/calendar/`, `src/app/calendar/page.tsx`, and verified by `tests/calendar_reviewer_adversarial_round2.test.ts`.
+
+---
+
+## Decision 012: Adversarial Hardening (Round 3) — Multi-Month State Isolation, Dynamic Cadence Range, & Weekday Search Resilience
+
+Date: 2026-10-02  
+Status: Accepted  
+
+### Context
+Adversarial review (Round 3) identified seven subtle edge cases and state synchronization gaps across multi-month operations and search predicates:
+1. Hardcoded `"2026-09"` in `CalendarPage.tsx` caused the calendar matrix to snap back to September whenever a task was toggled or an event was recorded in non-September months (e.g. October).
+2. `calendarService.getCalendarDays()` generated bare day cells for non-September months without merging stored events, newly created tasks, or inspector data, causing data erasure on month reload.
+3. Adding events for dates outside September pushed new elements directly into `this.calendarDays`, violating the 35-cell September matrix structure contract.
+4. Month navigation (`handleNavigateMonth`) failed to synchronize `selectedDateKey`, `inspectorData`, and `temporalHealth` with the newly viewed month, leaving the inspector showing September 11 while looking at October.
+5. `calendarService.getTemporalHealth()` returned a hardcoded `"September Operational Equilibrium"` title regardless of the requested month.
+6. In Day view, searching for full weekday names (e.g. `"friday"`) failed because `displayedWeekdays` was sliced to 1 element, causing `displayedWeekdays[dayIndex % 7]` to return `undefined`.
+7. `AdjustMilestonesModal` and `NewEventModal` failed to re-initialize form state when opened after a previous cancellation, retaining stale unsubmitted values.
+8. `TemporalCadenceLegend` rendered a static `"30 Days · Week 36 to Week 40"` label regardless of active view (Month / Week / Day) or month duration (31 days).
+
+### Decision
+1. Updated `handleToggleTask` and `handleCreateEvent` in `CalendarPage.tsx` to dynamically query and reload `currentMonthKey`.
+2. Introduced `this.extraDayCells` in `calendarService.ts` to cleanly isolate out-of-month entries while enriching all generated multi-month matrix cells with existing events, rollups, and inspector records without mutating the curated 35-cell September matrix.
+3. Synchronized `selectedDateKey`, `inspectorData`, and `temporalHealth` in `handleNavigateMonth` to automatically focus on the viewed month (Day 1, or Sep 11 for September).
+4. Adapted `getTemporalHealth(month)` to dynamically produce month-aware operational equilibrium titles (e.g., `"October Operational Equilibrium"`).
+5. Expanded weekday search matching in `CalendarMatrix.tsx` to reference the full `WEEKDAYS` constant and full weekday names (`"friday"`, `"monday"`, etc.), eliminating out-of-bounds evaluation in Day view.
+6. Reset modal form states upon `open === true` in `AdjustMilestonesModal.tsx` and `NewEventModal.tsx`.
+7. Dynamically derived `cycleRangeText` in `CalendarPage.tsx` based on `activeView` (`"1 Day · Daily Vector Telemetry"`, `"7 Days · Week Cadence Focus"`, or month day counts).
+8. Connected `onFilterMatrix`, `onNotifications`, and `onViewOptions` header action callbacks to informative user feedback.
+
+### Impact
+Affects `src/services/calendarService.ts`, `src/components/calendar/`, `src/app/calendar/page.tsx`, and verified by `tests/calendar_reviewer_adversarial_round3.test.ts` (7/7 passing).
+

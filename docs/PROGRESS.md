@@ -145,3 +145,46 @@ This document tracks the active implementation status of all ANCHOR features and
 ### Known Issues:
 - None.
 
+---
+
+## 7. Unified Calendar & Goals Nexus (`/calendar`)
+**Status:** Completed
+
+### Completed:
+- Full implementation of `/calendar` matching Stitch Desktop `1107476226ef43f3ab26357445fb9cba`.
+- Calendar Header (`CalendarHeader.tsx`): month controls ("September 2026", "Q3 Ledger"), "Today" jump button, Month/Week/Day segmented toggle, search bar with `⌘K`, and `+ New Entry / Event` modal trigger.
+- Temporal Cadence Legend Bar (`TemporalCadenceLegend.tsx`): temporal cadence indicators (Finance Flow, Tasks Check, Journal Inscribed).
+- 7-Column Calendar Matrix (`CalendarMatrix.tsx`):
+  - 35 cells for September 2026 with weekday headers (SUN–SAT with bold FRI).
+  - Day numbers, net financial pills (+Rs. 4,200, -Rs. 1,300), task completion counts (e.g., 4/4 done), journal inscription markers (`edit_note`).
+  - Active focus day (Friday, Sep 11) highlighted with Anchor monogram badge (`⚓`), pulse ring, and financial/task rollup pills.
+- Matrix Temporal Health recessed bar (`MatrixTemporalHealthBar.tsx`): displays September Operational Equilibrium, tasks resolved (41/48), and net balance MTD (+Rs. 18,340).
+- Day Nexus Inspector panel (`DayNexusInspector.tsx`, 35% desktop width):
+  - Selected date header with synchronized telemetry across operational vectors.
+  - Interactive tasks vector checklist with click toggling and real-time state recalculation.
+  - Financial ledger breakdown (Food & Dining, Transit, Subscriptions).
+  - Journal inscription quote card with timestamp ("Inscribed 07:42 AM").
+  - Goals cadence contribution banner (+2.4% to Reserve).
+- Sovereign Goals Hub (`SovereignGoalsHub.tsx`):
+  - Annual Capital Reserve: Rs. 100,000 [72% achieved, gap Rs. 28,000]
+  - Next.js 15 Full Systems Mastery [70% achieved, 14 of 20 modules]
+  - Physical Resilience & Health [82% achieved, 18 of 22 sessions]
+  - Interactive strategic milestone calibration modal (`AdjustMilestonesModal.tsx`).
+- In-memory service (`calendarService.ts`) with deep cloning and dynamic day inspector synthesizer.
+- Global navigation links in `DesktopSidebar.tsx` and mobile navigation connected cleanly.
+- Adversarial Review Round 1: Fixed inspector data eviction on event creation, reactive temporal health synchronization, dynamic milestone metrics recalculation, native MUI iconography standardization, activeView grid adaptations, and timezone UTC normalization.
+- Adversarial Review Round 2: Hardened Friday Sep 11 active day rollups (spend pill & task count) with live reactive state, eliminated synthesized day task array truncation and state loss on multi-task days (e.g. Sep 09 with 6 tasks), implemented genuine month-by-month step navigation with dynamic matrix generation across months, synchronized `NewEventModal` dates with active calendar selection, enabled segmented view toggles on mobile screens, protected 7-column layout against text overflow, and added wrapping support for ledger cards.
+- Adversarial Review Round 3: Prevented matrix snap-back to September on non-September task/event actions by binding reloads to `currentMonthKey`, introduced `extraDayCells` to isolate out-of-month events without corrupting the pristine 35-cell September matrix structure, enriched all generated multi-month matrix cells with task/ledger/note data from inspectors and events, synchronized inspector date selection and month-aware temporal health during month transitions, resolved Day-view full weekday search query matching (`"friday"`, `"monday"`, etc.), prevented stale form values in modals on re-open after cancellation, and added view-aware cadence cycle text in `TemporalCadenceLegend`.
+- Programmatic verification: `tests/calendar_service_and_ui.test.ts` (14/14), `tests/calendar_service.test.ts` (10/10), `tests/calendar_reviewer_adversarial.test.ts` (6/6), `tests/calendar_reviewer_adversarial_round2.test.ts` (6/6), and `tests/calendar_reviewer_adversarial_round3.test.ts` (7/7) passing 100%.
+- Type check: `npx tsc --noEmit` exits with 0 errors across the entire codebase.
+
+### In Progress:
+- None.
+
+### Remaining:
+- Wire to live Supabase backend when user provides live credentials.
+
+### Known Issues:
+- None.
+
+
