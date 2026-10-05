@@ -39,7 +39,7 @@ export default function FinancePage() {
 
   // Filter & Pagination State
   const [filterCriteria, setFilterCriteria] = useState<TransactionFilterCriteria>({
-    selectedMonth: "2026-09",
+    selectedMonth: "2026-10",
     category: "all",
     accountId: "all",
     flowType: "all",

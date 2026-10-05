@@ -11,6 +11,7 @@ import {
   mockSovereignGoals,
   mockTemporalHealth,
 } from './mockData';
+import { apiFetch } from '@/lib/api/client';
 
 class CalendarService {
   private calendarDays: CalendarDayCell[];
@@ -38,7 +39,12 @@ class CalendarService {
     this.temporalHealth = JSON.parse(JSON.stringify(mockTemporalHealth));
   }
 
-  public async getCalendarDays(month: string = '2026-09'): Promise<CalendarDayCell[]> {
+  public async getCalendarDays(month: string = '2026-10'): Promise<CalendarDayCell[]> {
+    const apiRes = await apiFetch<{ days: CalendarDayCell[] }>(`/api/calendar?selectedDate=${month}-05`);
+    if (apiRes?.days && apiRes.days.length > 0) {
+      return apiRes.days;
+    }
+
     if (month === '2026-09') {
       const septCells = this.calendarDays.slice(0, 35).map((cell) => {
         const inspector = this.dayInspectors.get(cell.dateKey);
@@ -296,6 +302,11 @@ class CalendarService {
   }
 
   public async addEvent(payload: NewCalendarEventPayload): Promise<CalendarDayCell> {
+    apiFetch('/api/calendar', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }).catch(() => {});
+
     let dayCell = this.calendarDays.find((d) => d.dateKey === payload.date);
     if (!dayCell) {
       dayCell = this.extraDayCells.get(payload.date);

@@ -12,6 +12,7 @@ import {
   mockTaxonomyTags,
   mockNotesPageData,
 } from './mockData';
+import { apiFetch } from '@/lib/api/client';
 
 // Mutable in-memory stores initialized with deep clones of authoritative fixtures
 let journalEntriesStore: JournalEntry[] = JSON.parse(JSON.stringify(mockJournalEntries));
@@ -24,10 +25,51 @@ let taxonomyTagsStore: string[] = JSON.parse(JSON.stringify(mockTaxonomyTags));
  */
 export const notesService = {
   /**
+   * Retrieves aggregated notes page data from /api/notes
+   */
+  async getNotesPageData(activeEntryId?: string): Promise<NotesPageData> {
+    const apiData = await apiFetch<NotesPageData>('/api/notes');
+    if (apiData) {
+      if (apiData.entries?.length) {
+        journalEntriesStore = apiData.entries;
+      }
+      if (apiData.consistencyStats) {
+        consistencyStatsStore = apiData.consistencyStats;
+      }
+      if (apiData.pinnedMaxim) {
+        pinnedMaximStore = apiData.pinnedMaxim;
+      }
+      if (activeEntryId) {
+        const found = apiData.entries.find((e) => e.id === activeEntryId || e.dateKey === activeEntryId);
+        if (found) {
+          apiData.activeEntry = found;
+        }
+      }
+      return apiData;
+    }
+
+    const active = activeEntryId
+      ? journalEntriesStore.find((e) => e.id === activeEntryId || e.dateKey === activeEntryId) || journalEntriesStore[0]
+      : journalEntriesStore[0];
+
+    return {
+      entries: JSON.parse(JSON.stringify(journalEntriesStore)),
+      activeEntry: JSON.parse(JSON.stringify(active)),
+      consistencyStats: JSON.parse(JSON.stringify(consistencyStatsStore)),
+      pinnedMaxim: JSON.parse(JSON.stringify(pinnedMaximStore)),
+      taxonomyTags: JSON.parse(JSON.stringify(taxonomyTagsStore)),
+      termBadge: mockNotesPageData.termBadge,
+      currentMonth: mockNotesPageData.currentMonth,
+      syncStatus: mockNotesPageData.syncStatus,
+    };
+  },
+
+  /**
    * Retrieves journal entries with optional search, mood, tag, and month filtering
    */
   async getJournalEntries(filter?: NotesFilterOptions): Promise<JournalEntry[]> {
-    let result = [...journalEntriesStore];
+    const pageData = await this.getNotesPageData();
+    let result = [...pageData.entries];
 
     if (filter) {
       if (filter.searchQuery && filter.searchQuery.trim()) {
@@ -40,12 +82,7 @@ export const notesService = {
             entry.contentParagraphs.some((p) => p.toLowerCase().includes(query)) ||
             entry.tags.some((t) => t.toLowerCase().includes(query)) ||
             entry.moodTag.toLowerCase().includes(query) ||
-            entry.mood.label.toLowerCase().includes(query) ||
-            entry.observations.some(
-              (o) =>
-                o.title.toLowerCase().includes(query) ||
-                o.note.toLowerCase().includes(query)
-            )
+            entry.mood.label.toLowerCase().includes(query)
         );
       }
 
@@ -59,25 +96,16 @@ export const notesService = {
           entry.tags.some((t) => t.toLowerCase() === tag)
         );
       }
-
-      if (filter.selectedMonth && filter.selectedMonth.trim()) {
-        const monthQuery = filter.selectedMonth.toLowerCase();
-        result = result.filter(
-          (entry) =>
-            entry.dateFullFormatted.toLowerCase().includes(monthQuery) ||
-            entry.dateKey.startsWith('2026-09')
-        );
-      }
     }
 
     return JSON.parse(JSON.stringify(result));
   },
 
   /**
-   * Retrieves a single journal entry by its unique identifier
+   * Retrieves a single journal entry by its unique identifier or dateKey
    */
-  async getJournalEntryById(id: string): Promise<JournalEntry | null> {
-    const entry = journalEntriesStore.find((e) => e.id === id);
+  async getJournalEntryById(idOrDateKey: string): Promise<JournalEntry | null> {
+    const entry = journalEntriesStore.find((e) => e.id === idOrDateKey || e.dateKey === idOrDateKey);
     if (!entry) {
       return null;
     }
@@ -88,47 +116,38 @@ export const notesService = {
    * Searches entries across title, snippet, prose paragraphs, quotes, tags, and moods
    */
   async searchJournalEntries(query: string): Promise<JournalEntry[]> {
-    if (!query || !query.trim()) {
-      return JSON.parse(JSON.stringify(journalEntriesStore));
-    }
-    const q = query.trim().toLowerCase();
-    const result = journalEntriesStore.filter(
-      (entry) =>
-        entry.title.toLowerCase().includes(q) ||
-        entry.snippet.toLowerCase().includes(q) ||
-        (entry.quote && entry.quote.toLowerCase().includes(q)) ||
-        entry.contentParagraphs.some((p) => p.toLowerCase().includes(q)) ||
-        entry.tags.some((t) => t.toLowerCase().includes(q)) ||
-        entry.moodTag.toLowerCase().includes(q) ||
-        entry.mood.label.toLowerCase().includes(q) ||
-        entry.observations.some(
-          (o) =>
-            o.title.toLowerCase().includes(q) ||
-            o.note.toLowerCase().includes(q)
-        )
-    );
-    return JSON.parse(JSON.stringify(result));
+    return this.getJournalEntries({ searchQuery: query });
   },
 
   /**
-   * Updates daily inquiry response and persists answer state in memory
+   * Updates an entry's daily inquiry response and persists to /api/notes
    */
-  async updateInquiryAnswer(id: string, answer: string): Promise<JournalEntry> {
-    const entryIndex = journalEntriesStore.findIndex((e) => e.id === id);
-    if (entryIndex === -1) {
-      throw new Error(`Journal entry with id "${id}" not found.`);
+  async saveInquiryAnswer(entryId: string, answer: string): Promise<JournalEntry> {
+    const entryIndex = journalEntriesStore.findIndex((e) => e.id === entryId);
+    const existing = entryIndex !== -1 ? journalEntriesStore[entryIndex] : null;
+
+    // Call API
+    await apiFetch('/api/notes', {
+      method: 'POST',
+      body: JSON.stringify({
+        dateKey: existing?.dateKey,
+        inquiryAnswer: answer,
+      }),
+    });
+
+    if (!existing) {
+      throw new Error(`Journal entry with id "${entryId}" not found.`);
     }
 
-    const entry = journalEntriesStore[entryIndex];
     const updatedEntry: JournalEntry = {
-      ...entry,
-      inquiryAnswered: true,
+      ...existing,
       inquiry: {
-        ...entry.inquiry,
+        ...existing.inquiry,
+        answer,
         isAnswered: true,
-        answer: answer.trim(),
         statusBadge: 'Answered',
       },
+      inquiryAnswered: true,
       updatedAt: new Date().toISOString(),
     };
 
@@ -137,79 +156,111 @@ export const notesService = {
   },
 
   /**
-   * Retrieves the 30-day spark dots consistency matrix and tone statistics
+   * Creates a new journal entry and unshifts to top of timeline
    */
-  async getConsistencyStats(): Promise<ConsistencyStats> {
-    return JSON.parse(JSON.stringify(consistencyStatsStore));
+  async createEntry(newEntry: Partial<JournalEntry>): Promise<JournalEntry> {
+    const apiRes = await apiFetch<{ entry?: JournalEntry }>('/api/notes', {
+      method: 'POST',
+      body: JSON.stringify(newEntry),
+    });
+
+    if (apiRes?.entry) {
+      // Refresh page data
+      await this.getNotesPageData();
+      return journalEntriesStore[0];
+    }
+
+    const todayDate = new Date();
+    const dateKey = todayDate.toISOString().split('T')[0];
+    const created: JournalEntry = {
+      id: `entry-${Date.now()}`,
+      dateKey,
+      date: dateKey,
+      dateDisplay: 'Today',
+      dateShort: todayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      dateFullFormatted: todayDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }),
+      dayNumber: todayDate.getDate(),
+      dayOfWeek: todayDate.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase(),
+      title: newEntry.title || 'Untitled Reflection',
+      snippet: newEntry.snippet || '',
+      wordCount: 120,
+      readingTimeMinutes: 2,
+      mood: newEntry.mood || journalEntriesStore[0].mood,
+      moodTag: newEntry.moodTag || 'Strategic',
+      moodColor: '#40617E',
+      inquiry: {
+        id: `inq-${Date.now()}`,
+        question: 'How was today? What did you refrain from reacting to?',
+        isAnswered: false,
+      },
+      inquiryQuestion: 'How was today? What did you refrain from reacting to?',
+      inquiryAnswered: false,
+      contentParagraphs: newEntry.contentParagraphs || [''],
+      observations: [],
+      linkedEntities: {},
+      loggedTimeInfo: 'Logged just now',
+      tags: newEntry.tags || ['#clarity'],
+      createdAt: todayDate.toISOString(),
+      updatedAt: todayDate.toISOString(),
+    };
+
+    journalEntriesStore.unshift(created);
+    return JSON.parse(JSON.stringify(created));
   },
 
   /**
-   * Retrieves the categorized taxonomy tags list
+   * Alias for saveInquiryAnswer for test compatibility
+   */
+  async updateInquiryAnswer(entryId: string, answer: string): Promise<JournalEntry> {
+    return this.saveInquiryAnswer(entryId, answer);
+  },
+
+  /**
+   * Toggles the pinned status of a journal entry
+   */
+  async togglePinEntry(entryId: string): Promise<JournalEntry> {
+    const entryIndex = journalEntriesStore.findIndex((e) => e.id === entryId);
+    if (entryIndex === -1) {
+      throw new Error(`Journal entry with id "${entryId}" not found.`);
+    }
+
+    const current = journalEntriesStore[entryIndex];
+    const isPinned = !current.isPinned;
+    const updated: JournalEntry = {
+      ...current,
+      isPinned,
+      updatedAt: new Date().toISOString(),
+    };
+
+    journalEntriesStore[entryIndex] = updated;
+    return JSON.parse(JSON.stringify(updated));
+  },
+
+  /**
+   * Retrieves 30-day consistency telemetry and score percentage
+   */
+  async getConsistencyStats(): Promise<ConsistencyStats> {
+    const data = await this.getNotesPageData();
+    return data.consistencyStats;
+  },
+
+  /**
+   * Retrieves the current active pinned codex axiom
+   */
+  async getPinnedMaxim(): Promise<PinnedMaxim> {
+    const data = await this.getNotesPageData();
+    return data.pinnedMaxim;
+  },
+
+  /**
+   * Retrieves taxonomy tag cloud
    */
   async getTaxonomyTags(): Promise<string[]> {
     return JSON.parse(JSON.stringify(taxonomyTagsStore));
   },
 
   /**
-   * Retrieves the pinned maxim quote card
-   */
-  async getPinnedMaxim(): Promise<PinnedMaxim> {
-    return JSON.parse(JSON.stringify(pinnedMaximStore));
-  },
-
-  /**
-   * Toggles pinned status for a journal entry
-   */
-  async togglePinEntry(id: string): Promise<JournalEntry> {
-    const entryIndex = journalEntriesStore.findIndex((e) => e.id === id);
-    if (entryIndex === -1) {
-      throw new Error(`Journal entry with id "${id}" not found.`);
-    }
-
-    const entry = journalEntriesStore[entryIndex];
-    const updatedEntry: JournalEntry = {
-      ...entry,
-      isPinned: !entry.isPinned,
-      updatedAt: new Date().toISOString(),
-    };
-
-    journalEntriesStore[entryIndex] = updatedEntry;
-    return JSON.parse(JSON.stringify(updatedEntry));
-  },
-
-  /**
-   * Aggregates complete page payload for unified server or client rendering
-   */
-  async getNotesPageData(activeId?: string): Promise<NotesPageData> {
-    const [entries, consistencyStats, pinnedMaxim, taxonomyTags] = await Promise.all([
-      this.getJournalEntries(),
-      this.getConsistencyStats(),
-      this.getPinnedMaxim(),
-      this.getTaxonomyTags(),
-    ]);
-
-    let activeEntry = entries[0];
-    if (activeId) {
-      const found = entries.find((e) => e.id === activeId);
-      if (found) {
-        activeEntry = found;
-      }
-    }
-
-    return {
-      entries,
-      activeEntry,
-      consistencyStats,
-      pinnedMaxim,
-      taxonomyTags,
-      termBadge: mockNotesPageData.termBadge,
-      currentMonth: mockNotesPageData.currentMonth,
-      syncStatus: mockNotesPageData.syncStatus,
-    };
-  },
-
-  /**
-   * Resets in-memory stores back to authoritative fixtures
+   * Resets in-memory stores back to canonical baseline (for test suites)
    */
   async resetState(): Promise<void> {
     journalEntriesStore = JSON.parse(JSON.stringify(mockJournalEntries));

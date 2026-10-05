@@ -13,6 +13,7 @@ import {
   mockCashflowVelocity,
   mockRecurringObligations,
 } from './mockData';
+import { apiFetch } from '@/lib/api/client';
 
 // Mutable in-memory stores initialized with mock fixtures
 let accountsStore: Account[] = JSON.parse(JSON.stringify(mockAccounts));
@@ -40,6 +41,11 @@ export const financeService = {
    * Retrieves all user accounts
    */
   async getAccounts(): Promise<Account[]> {
+    const apiAccounts = await apiFetch<Account[]>('/api/finance/accounts');
+    if (apiAccounts) {
+      accountsStore = apiAccounts;
+      return apiAccounts;
+    }
     return JSON.parse(JSON.stringify(accountsStore));
   },
 
@@ -49,6 +55,24 @@ export const financeService = {
   async getTransactions(
     criteria: TransactionFilterCriteria = {}
   ): Promise<PaginatedTransactionsResponse> {
+    const params = new URLSearchParams();
+    if (criteria.page) params.set('page', String(criteria.page));
+    if (criteria.pageSize) params.set('pageSize', String(criteria.pageSize));
+    if (criteria.category) params.set('category', criteria.category);
+    if (criteria.accountId) params.set('accountId', criteria.accountId);
+    if (criteria.flowType) params.set('flowType', criteria.flowType);
+    if (criteria.selectedMonth) params.set('selectedMonth', criteria.selectedMonth);
+    if (criteria.searchQuery) params.set('searchQuery', criteria.searchQuery);
+    if (criteria.sortBy) params.set('sortBy', criteria.sortBy);
+
+    const apiTxResponse = await apiFetch<PaginatedTransactionsResponse>(
+      `/api/finance/transactions?${params.toString()}`
+    );
+    if (apiTxResponse) {
+      return apiTxResponse;
+    }
+
+    // Fallback calculation using in-memory store
     const {
       selectedMonth,
       category = 'all',
@@ -62,27 +86,18 @@ export const financeService = {
 
     let filtered = [...transactionsStore];
 
-    // Filter by Month (YYYY-MM)
     if (selectedMonth) {
       filtered = filtered.filter((tx) => tx.date.startsWith(selectedMonth));
     }
-
-    // Filter by Category
     if (category && category !== 'all') {
       filtered = filtered.filter((tx) => tx.category === category);
     }
-
-    // Filter by Account
     if (accountId && accountId !== 'all') {
       filtered = filtered.filter((tx) => tx.accountId === accountId);
     }
-
-    // Filter by Flow Type
     if (flowType && flowType !== 'all') {
       filtered = filtered.filter((tx) => tx.flowType === flowType);
     }
-
-    // Search query match (payee, note, category label)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(
@@ -94,7 +109,6 @@ export const financeService = {
       );
     }
 
-    // Sorting
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'date_asc':
@@ -109,10 +123,8 @@ export const financeService = {
       }
     });
 
-    // Summary calculations across filtered set
     let totalInflow = 0;
     let totalOutflow = 0;
-
     for (const tx of filtered) {
       if (tx.amount > 0) {
         totalInflow += tx.amount;
@@ -146,72 +158,101 @@ export const financeService = {
    * Records a new transaction via Quick Entry and updates associated account balances
    */
   async recordTransaction(entry: QuickEntryPayload): Promise<Transaction> {
+    let flowType: Transaction['flowType'] = 'outflow';
+    if (entry.intent === 'received') {
+      flowType = 'inflow';
+    } else if (entry.intent === 'moved') {
+      flowType = 'transfer';
+    }
+
+    const apiTx = await apiFetch<Transaction>('/api/finance/transactions', {
+      method: 'POST',
+      body: JSON.stringify({
+        accountId: entry.accountId,
+        destinationAccountId: entry.destinationAccountId,
+        amount: entry.amount,
+        currency: entry.currency,
+        flowType,
+        category: entry.category,
+        payeeOrPayer: entry.memo || CATEGORY_LABELS[entry.category] || 'Quick Entry',
+        note: entry.memo,
+        date: entry.date,
+      }),
+    });
+
+    if (apiTx) {
+      transactionsStore.unshift(apiTx);
+      // Refresh accounts in background
+      this.getAccounts().catch(() => {});
+      return apiTx;
+    }
+
+    // In-memory fallback
     const accountIndex = accountsStore.findIndex((a) => a.id === entry.accountId);
     const sourceAccount = accountIndex !== -1 ? accountsStore[accountIndex] : null;
     const accountName = sourceAccount ? sourceAccount.name : 'Primary Account';
 
-    let flowType: Transaction['flowType'] = 'outflow';
     let computedAmount = -Math.abs(entry.amount);
-
     if (entry.intent === 'received') {
-      flowType = 'inflow';
       computedAmount = Math.abs(entry.amount);
-    } else if (entry.intent === 'moved') {
-      flowType = 'transfer';
-      computedAmount = -Math.abs(entry.amount);
     }
 
     const now = new Date();
-    const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const timeFormatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
-    const newTx: Transaction = {
-      id: `tx-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    const newTransaction: Transaction = {
+      id: `tx-user-${Date.now()}`,
       accountId: entry.accountId,
       accountName,
       amount: computedAmount,
       currency: entry.currency,
       flowType,
       category: entry.category,
-      categoryLabel: CATEGORY_LABELS[entry.category] || 'General',
-      payeeOrPayer: entry.memo?.trim() || (flowType === 'inflow' ? 'Direct Deposit' : 'Ad hoc Expense'),
-      note: entry.memo || undefined,
-      date: entry.date || now.toISOString().slice(0, 10),
-      time,
+      categoryLabel: CATEGORY_LABELS[entry.category] || 'Other Outflow',
+      payeeOrPayer: entry.memo || 'Direct Entry',
+      note: entry.memo,
+      date: entry.date,
+      time: timeFormatted,
       paymentMethod: 'card',
       status: 'cleared',
       createdAt: now.toISOString(),
     };
 
-    // Update source account balance
+    transactionsStore.unshift(newTransaction);
     if (sourceAccount) {
       sourceAccount.balance += computedAmount;
       sourceAccount.updatedAt = now.toISOString();
     }
 
-    // If transfer to destination account
-    if (entry.intent === 'moved' && entry.destinationAccountId) {
-      const destAccount = accountsStore.find((a) => a.id === entry.destinationAccountId);
-      if (destAccount) {
-        destAccount.balance += Math.abs(entry.amount);
-        destAccount.updatedAt = now.toISOString();
-      }
-    }
-
-    transactionsStore.unshift(newTx);
-    return JSON.parse(JSON.stringify(newTx));
+    return JSON.parse(JSON.stringify(newTransaction));
   },
 
   /**
-   * Retrieves cashflow velocity metrics and detected hotspots
+   * Retrieves high-velocity metrics and cashflow retention health
    */
   async getCashflowVelocity(): Promise<CashflowVelocity> {
+    const apiData = await apiFetch<{ velocity: CashflowVelocity; recurring: RecurringObligation[] }>(
+      '/api/finance/velocity'
+    );
+    if (apiData?.velocity) {
+      velocityStore = apiData.velocity;
+      if (apiData.recurring) recurringStore = apiData.recurring;
+      return apiData.velocity;
+    }
     return JSON.parse(JSON.stringify(velocityStore));
   },
 
   /**
-   * Retrieves recurring subscription and lease obligations
+   * Retrieves recurring commitments and subscriptions
    */
   async getRecurringObligations(): Promise<RecurringObligation[]> {
+    const apiData = await apiFetch<{ velocity: CashflowVelocity; recurring: RecurringObligation[] }>(
+      '/api/finance/velocity'
+    );
+    if (apiData?.recurring) {
+      recurringStore = apiData.recurring;
+      return apiData.recurring;
+    }
     return JSON.parse(JSON.stringify(recurringStore));
   },
 
@@ -260,7 +301,7 @@ export const financeService = {
   },
 
   /**
-   * Resets in-memory stores back to baseline fixtures (for test repeatability)
+   * Resets in-memory stores back to canonical baseline (for test suites)
    */
   async resetState(): Promise<void> {
     accountsStore = JSON.parse(JSON.stringify(mockAccounts));

@@ -17,6 +17,7 @@ import {
   mockSystemPhases,
   mockVelocityMetrics,
 } from './mockData';
+import { apiFetch } from '@/lib/api/client';
 
 // Mutable in-memory stores initialized with deep clones of authoritative fixtures
 let tasksStore: TaskItem[] = JSON.parse(JSON.stringify(mockTaskItems));
@@ -30,16 +31,48 @@ let systemPhasesStore: SystemPhase[] = JSON.parse(JSON.stringify(mockSystemPhase
  */
 export const tasksService = {
   /**
+   * Retrieves full page data from /api/tasks
+   */
+  async getPageData(): Promise<TasksPageData> {
+    const apiData = await apiFetch<TasksPageData>('/api/tasks');
+    if (apiData) {
+      tasksStore = apiData.tasks;
+      projectsStore = apiData.activeProjects;
+      return apiData;
+    }
+
+    return {
+      tasks: JSON.parse(JSON.stringify(tasksStore)),
+      activeProjects: JSON.parse(JSON.stringify(projectsStore)),
+      weeklyRhythm: JSON.parse(JSON.stringify(weeklyRhythmStore)),
+      executionRhythm: JSON.parse(JSON.stringify(executionRhythmStore)),
+      velocityMetrics: {
+        completedCount: tasksStore.filter((t) => t.isCompleted).length,
+        weeklyAverageDelta: mockVelocityMetrics.weeklyAverageDelta,
+        weeklyRhythm: JSON.parse(JSON.stringify(weeklyRhythmStore)),
+        syncStatus: 'Local Store',
+        syncLatencyMs: 0,
+      },
+      systemPhases: JSON.parse(JSON.stringify(systemPhasesStore)),
+    };
+  },
+
+  /**
    * Retrieves tasks filtered by tab category (or all tasks if unspecified)
    */
   async getTasks(filter?: TaskFilterTab): Promise<TaskItem[]> {
-    let result = [...tasksStore];
+    const url = filter ? `/api/tasks?tab=${filter}` : '/api/tasks';
+    const apiData = await apiFetch<TasksPageData>(url);
+    if (apiData?.tasks) {
+      tasksStore = apiData.tasks;
+      return apiData.tasks;
+    }
 
+    let result = [...tasksStore];
     if (filter) {
       if (filter === 'completed') {
         result = result.filter((t) => t.isCompleted);
       } else if (filter === 'today') {
-        // Includes tasks flagged for today (both completed and pending)
         result = result.filter((t) => t.tabCategory === 'today');
       } else {
         result = result.filter((t) => t.tabCategory === filter);
@@ -54,49 +87,33 @@ export const tasksService = {
    */
   async toggleTask(id: string): Promise<TaskItem> {
     const taskIndex = tasksStore.findIndex((t) => t.id === id);
-    if (taskIndex === -1) {
+    const existing = taskIndex !== -1 ? tasksStore[taskIndex] : null;
+    const nextCompleted = existing ? !existing.isCompleted : true;
+
+    const apiTask = await apiFetch<TaskItem>(`/api/tasks/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isCompleted: nextCompleted }),
+    });
+
+    if (apiTask) {
+      if (taskIndex !== -1) {
+        tasksStore[taskIndex] = apiTask;
+      }
+      return apiTask;
+    }
+
+    if (!existing) {
       throw new Error(`Task with id "${id}" not found.`);
     }
 
-    const task = tasksStore[taskIndex];
-    const nextCompleted = !task.isCompleted;
-
     const updatedTask: TaskItem = {
-      ...task,
+      ...existing,
       isCompleted: nextCompleted,
       completedAt: nextCompleted ? new Date().toISOString() : undefined,
-      statusBadge: nextCompleted
-        ? 'Done'
-        : task.priority === 'high'
-        ? 'HIGH'
-        : task.category.toLowerCase() === 'learning'
-        ? 'Learning'
-        : undefined,
+      statusBadge: nextCompleted ? 'Done' : existing.priority === 'high' ? 'HIGH' : undefined,
     };
 
     tasksStore[taskIndex] = updatedTask;
-
-    // Synchronize parent project completed task counter if linked
-    if (task.projectId && task.projectId !== 'inbox') {
-      const projectIndex = projectsStore.findIndex((p) => p.id === task.projectId);
-      if (projectIndex !== -1) {
-        const project = projectsStore[projectIndex];
-        const nextCompletedCount = nextCompleted
-          ? Math.min(project.totalTasks, project.tasksCompleted + 1)
-          : Math.max(0, project.tasksCompleted - 1);
-        const nextPercent =
-          project.totalTasks > 0
-            ? Math.round((nextCompletedCount / project.totalTasks) * 100)
-            : 0;
-
-        projectsStore[projectIndex] = {
-          ...project,
-          tasksCompleted: nextCompletedCount,
-          progressPercentage: nextPercent,
-        };
-      }
-    }
-
     return JSON.parse(JSON.stringify(updatedTask));
   },
 
@@ -104,61 +121,40 @@ export const tasksService = {
    * Creates a new task via Quick Task Capture and unshifts into the active queue
    */
   async createTask(payload: CreateTaskPayload): Promise<TaskItem> {
-    if (!payload.title || !payload.title.trim()) {
-      throw new Error('Task title is required.');
+    const apiTask = await apiFetch<TaskItem>('/api/tasks', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    if (apiTask) {
+      tasksStore.unshift(apiTask);
+      return apiTask;
     }
 
-    let projectName = payload.projectName || 'Unassigned / Inbox';
-    const projectId = payload.projectId || 'inbox';
-
-    // Synchronize with project if assigned
-    if (projectId !== 'inbox') {
-      const projectIndex = projectsStore.findIndex((p) => p.id === projectId);
-      if (projectIndex !== -1) {
-        const project = projectsStore[projectIndex];
-        projectName = project.title;
-        const nextTotal = project.totalTasks + 1;
-        const nextPercent = Math.round((project.tasksCompleted / nextTotal) * 100);
-
-        projectsStore[projectIndex] = {
-          ...project,
-          totalTasks: nextTotal,
-          progressPercentage: nextPercent,
-        };
-      }
-    }
-
-    const priority = payload.priority || 'medium';
-    const category = payload.category || 'Engineering';
-    const categoryLabel = payload.categoryLabel || category;
-    const dueDate = payload.dueDate || 'Today';
-    const dueTime = payload.dueTime || '6:00 PM';
-    const dueInfo = payload.dueInfo || (payload.dueTime ? `Due ${payload.dueTime}` : dueDate);
-    const tabCategory =
-      payload.tabCategory ||
-      (dueDate.toLowerCase().includes('tomorrow') ? 'upcoming' : 'today');
-
+    const id = `task-local-${Date.now()}`;
     const newTask: TaskItem = {
-      id: `task-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id,
       title: payload.title.trim(),
       isCompleted: false,
-      priority,
-      category,
-      categoryLabel,
-      statusBadge: priority === 'high' ? 'HIGH' : undefined,
-      dueInfo,
-      dueTime,
-      dueDate,
-      projectId,
-      projectName,
-      metaPill: payload.metaPill || categoryLabel,
-      estimatedMinutes: payload.estimatedMinutes,
-      tabCategory,
+      priority: payload.priority,
+      category: payload.category || 'work',
+      categoryLabel: (payload.category || 'work').toUpperCase(),
+      dueDate: payload.dueDate || '2026-10-05',
+      dueInfo: payload.dueInfo || 'Today',
+      tabCategory: payload.tabCategory || 'today',
       createdAt: new Date().toISOString(),
     };
 
     tasksStore.unshift(newTask);
     return JSON.parse(JSON.stringify(newTask));
+  },
+
+  /**
+   * Deletes a task by ID
+   */
+  async deleteTask(id: string): Promise<void> {
+    await apiFetch(`/api/tasks/${id}`, { method: 'DELETE' });
+    tasksStore = tasksStore.filter((t) => t.id !== id);
   },
 
   /**
@@ -169,7 +165,7 @@ export const tasksService = {
   },
 
   /**
-   * Retrieves 7-day weekly rhythm bar heights (Mon-Sun with Wednesday active)
+   * Retrieves 7-day weekly rhythm bar heights
    */
   async getWeeklyRhythm(): Promise<WeeklyRhythmDay[]> {
     return JSON.parse(JSON.stringify(weeklyRhythmStore));
@@ -206,28 +202,11 @@ export const tasksService = {
    * Aggregates complete page payload for unified server or client loading
    */
   async getTasksPageData(): Promise<TasksPageData> {
-    const [tasks, activeProjects, weeklyRhythm, executionRhythm, velocityMetrics, systemPhases] =
-      await Promise.all([
-        this.getTasks('today'),
-        this.getActiveProjects(),
-        this.getWeeklyRhythm(),
-        this.getExecutionRhythm(),
-        this.getVelocityMetrics(),
-        this.getSystemPhases(),
-      ]);
-
-    return {
-      tasks,
-      activeProjects,
-      weeklyRhythm,
-      executionRhythm,
-      velocityMetrics,
-      systemPhases,
-    };
+    return this.getPageData();
   },
 
   /**
-   * Resets in-memory stores back to pristine fixtures
+   * Resets in-memory stores back to baseline fixtures (for testing)
    */
   async resetState(): Promise<void> {
     tasksStore = JSON.parse(JSON.stringify(mockTaskItems));

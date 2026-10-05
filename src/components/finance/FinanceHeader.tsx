@@ -28,6 +28,7 @@ export default function FinanceHeader({
   const openMenu = Boolean(anchorEl);
 
   const months = [
+    { value: "2026-10", label: "October 2026" },
     { value: "2026-09", label: "September 2026" },
     { value: "2026-08", label: "August 2026" },
     { value: "2026-07", label: "July 2026" },

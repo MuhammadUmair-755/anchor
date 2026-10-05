@@ -3,12 +3,25 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/api/auth/dev-session(.*)",
+  "/api/seed(.*)",
 ]);
 
 const isApiRoute = createRouteMatcher(["/api(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
+  const isDev = process.env.NODE_ENV !== "production";
+  const devSession = req.cookies.get("anchor_dev_session")?.value;
+
+  // In development, if a dev session cookie is active, permit access
+  if (isDev && devSession) {
+    return;
+  }
+
   if (isApiRoute(req)) {
+    if (isPublicRoute(req)) {
+      return;
+    }
     const session = await auth();
     if (!session.userId) {
       return Response.json(
