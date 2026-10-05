@@ -17,6 +17,7 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 interface MobileNavDrawerProps {
   open: boolean;
@@ -66,6 +67,14 @@ export default function MobileNavDrawer({
   onOpenQuickEntry,
 }: MobileNavDrawerProps) {
   const pathname = usePathname();
+  const {
+    displayName,
+    avatarLetter,
+    avatarUrl,
+    tierLabel,
+    email,
+    openUserProfile,
+  } = useUserProfile();
 
   const isNavActive = (href: string) => {
     if (!pathname) return false;
@@ -304,6 +313,8 @@ export default function MobileNavDrawer({
 
         {/* User Profile Chip */}
         <Box
+          onClick={openUserProfile}
+          title={email ? `${displayName} (${email}) — Click to view profile` : `${displayName} — Click to view profile`}
           sx={{
             p: 2,
             borderTop: "1px solid rgba(17, 28, 46, 0.08)",
@@ -311,24 +322,32 @@ export default function MobileNavDrawer({
             display: "flex",
             alignItems: "center",
             gap: 1.5,
+            cursor: "pointer",
+            transition: "background-color 0.15s ease",
+            "&:hover": {
+              bgcolor: "rgba(11, 22, 40, 0.04)",
+            },
           }}
         >
           <Avatar
+            src={avatarUrl}
+            alt={displayName}
             sx={{
               width: 36,
               height: 36,
               bgcolor: "#0B1628",
               color: "#FCFBF8",
-              fontSize: "0.8125rem",
+              fontSize: "0.875rem",
               fontWeight: 700,
               flexShrink: 0,
             }}
           >
-            AV
+            {avatarLetter}
           </Avatar>
-          <Box sx={{ overflow: "hidden" }}>
+          <Box sx={{ overflow: "hidden", minWidth: 0, flexGrow: 1 }}>
             <Typography
               variant="body2"
+              title={displayName}
               sx={{
                 fontWeight: 600,
                 color: "#0B1628",
@@ -338,16 +357,20 @@ export default function MobileNavDrawer({
                 overflow: "hidden",
               }}
             >
-              Alex Vance
+              {displayName}
             </Typography>
             <Typography
               variant="caption"
+              title={email || tierLabel}
               sx={{
                 color: "#68717C",
                 fontSize: "0.6875rem",
                 display: "flex",
                 alignItems: "center",
                 gap: 0.5,
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
+                overflow: "hidden",
               }}
             >
               <Box
@@ -358,9 +381,10 @@ export default function MobileNavDrawer({
                   borderRadius: "50%",
                   bgcolor: "#5F9277",
                   display: "inline-block",
+                  flexShrink: 0,
                 }}
               />
-              Executive Tier
+              {tierLabel}
             </Typography>
           </Box>
         </Box>

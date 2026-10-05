@@ -10,7 +10,9 @@ import MenuItem from "@mui/material/MenuItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Tooltip from "@mui/material/Tooltip";
+import Avatar from "@mui/material/Avatar";
 import LogoutIcon from "@mui/icons-material/Logout";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
@@ -34,6 +36,13 @@ export default function TopHeader({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
   const { signOut } = useClerk();
+  const {
+    displayName,
+    avatarLetter,
+    avatarUrl,
+    email,
+    openUserProfile,
+  } = useUserProfile();
 
   const handleLogout = async () => {
     try {
@@ -87,7 +96,7 @@ export default function TopHeader({
             color: "#0B1628",
           }}
         >
-          Good morning, Alex.
+          Good morning, {displayName}.
         </Typography>
 
         {/* System Steady Pill */}
@@ -132,6 +141,59 @@ export default function TopHeader({
 
       {/* Right: Logout & + Add Entry Flyout */}
       <Stack direction="row" spacing={{ xs: 1, md: 1.5 }} sx={{ alignItems: "center" }}>
+        {/* User Profile Avatar Pill */}
+        <Tooltip title={email ? `${displayName} (${email}) — Account Settings` : `${displayName} — Account Settings`}>
+          <Box
+            onClick={openUserProfile}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              cursor: "pointer",
+              p: 0.5,
+              pr: { xs: 0.5, md: 1.25 },
+              borderRadius: "9999px",
+              bgcolor: "rgba(11, 22, 40, 0.03)",
+              border: "1px solid rgba(17, 28, 46, 0.08)",
+              transition: "all 0.15s ease",
+              "&:hover": {
+                bgcolor: "rgba(11, 22, 40, 0.06)",
+                borderColor: "rgba(17, 28, 46, 0.15)",
+              },
+            }}
+          >
+            <Avatar
+              src={avatarUrl}
+              alt={displayName}
+              sx={{
+                width: 28,
+                height: 28,
+                bgcolor: "#0B1628",
+                color: "#FCFBF8",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+              }}
+            >
+              {avatarLetter}
+            </Avatar>
+            <Typography
+              variant="body2"
+              sx={{
+                display: { xs: "none", sm: "block" },
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                color: "#0B1628",
+                maxWidth: 110,
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
+                overflow: "hidden",
+              }}
+            >
+              {displayName}
+            </Typography>
+          </Box>
+        </Tooltip>
+
         {/* Logout Button */}
         <Tooltip title="Sign out of ANCHOR">
           <Button
