@@ -9,6 +9,7 @@ import Tooltip from "@mui/material/Tooltip";
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useClerk } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 interface MobileTopBarProps {
   systemStatus?: "steady" | "reconciling" | "attention";
@@ -19,13 +20,14 @@ export default function MobileTopBar({
   systemStatus = "steady",
   onOpenNavDrawer,
 }: MobileTopBarProps) {
+  const router = useRouter();
   const { signOut } = useClerk();
 
   const handleLogout = async () => {
     try {
       await signOut({ redirectUrl: "/sign-in" });
     } catch {
-      window.location.href = "/sign-in";
+      router.push("/sign-in");
     }
   };
   return (

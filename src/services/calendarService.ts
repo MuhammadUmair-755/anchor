@@ -212,7 +212,7 @@ class CalendarService {
       inspector.tasksPending = inspector.tasksList.filter((t) => !t.isCompleted).length;
 
       // Update the day cell's task count in calendarDays or extraDayCells
-      let dayCell = this.calendarDays.find((d) => d.dateKey === dateKey);
+      const dayCell = this.calendarDays.find((d) => d.dateKey === dateKey);
       if (dayCell) {
         dayCell.tasksDone = inspector.tasksDone;
         dayCell.tasksTotal = inspector.tasksList.length;

@@ -23,7 +23,6 @@ export interface MobileNotesViewProps {
 }
 
 export default function MobileNotesView({
-  entries,
   activeEntry,
   onSelectEntry,
   onContinueWriting,

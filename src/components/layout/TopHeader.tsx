@@ -5,8 +5,6 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
-import Badge from "@mui/material/Badge";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
@@ -21,6 +19,7 @@ import EditNoteIcon from "@mui/icons-material/EditNote";
 import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { useClerk } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 interface TopHeaderProps {
   onOpenQuickEntry: (intent?: "spent" | "received" | "moved") => void;
@@ -31,6 +30,7 @@ export default function TopHeader({
   onOpenQuickEntry,
   systemStatus = "steady",
 }: TopHeaderProps) {
+  const router = useRouter();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
   const { signOut } = useClerk();
@@ -39,7 +39,7 @@ export default function TopHeader({
     try {
       await signOut({ redirectUrl: "/sign-in" });
     } catch {
-      window.location.href = "/sign-in";
+      router.push("/sign-in");
     }
   };
 

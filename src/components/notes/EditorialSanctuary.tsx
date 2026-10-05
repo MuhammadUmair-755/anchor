@@ -9,7 +9,6 @@ import PsychologyAltIcon from "@mui/icons-material/PsychologyAlt";
 import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
 import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
-import CheckIcon from "@mui/icons-material/Check";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import { JournalEntry } from "@/types/models";
 
