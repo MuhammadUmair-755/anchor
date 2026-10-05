@@ -40,6 +40,9 @@ export default function TopHeader({
       await signOut({ redirectUrl: "/sign-in" });
     } catch {
       router.push("/sign-in");
+    } finally {
+      router.push("/sign-in");
+      router.refresh();
     }
   };
 
