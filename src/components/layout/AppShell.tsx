@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { usePathname } from "next/navigation";
 import Box from "@mui/material/Box";
 import DesktopSidebar from "./DesktopSidebar";
 import TopHeader from "./TopHeader";
@@ -14,10 +15,31 @@ interface AppShellProps {
 }
 
 export default function AppShell({ children }: AppShellProps) {
+  const pathname = usePathname();
+  const isAuthPage = pathname?.startsWith("/sign-in") || pathname?.startsWith("/sign-up");
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [mobileNavOpen, setMobileNavOpen] = useState<boolean>(false);
   const [quickEntryOpen, setQuickEntryOpen] = useState<boolean>(false);
   const [quickEntryIntent, setQuickEntryIntent] = useState<"spent" | "received" | "moved">("spent");
+
+  if (isAuthPage) {
+    return (
+      <Box
+        component="main"
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "#F7F5EF",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          p: { xs: 2, sm: 4 },
+        }}
+      >
+        {children}
+      </Box>
+    );
+  }
 
   const handleOpenQuickEntry = (intent: "spent" | "received" | "moved" = "spent") => {
     setQuickEntryIntent(intent);
