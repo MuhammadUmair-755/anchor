@@ -7,13 +7,10 @@ import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 
 export interface LiquidityHeroProps {
   totalLiquidity?: number;
-  liquidityTrendPercent?: number;
   monthlyInflow?: number;
-  monthlyInflowTrendPercent?: number;
   inflowSourcesCount?: number;
   totalExpenses?: number;
   expensesBurnRatePercent?: number;
@@ -23,15 +20,13 @@ export interface LiquidityHeroProps {
 }
 
 export default function LiquidityHero({
-  totalLiquidity = 79200,
-  liquidityTrendPercent = 4.2,
-  monthlyInflow = 120000,
-  monthlyInflowTrendPercent = 8.5,
-  inflowSourcesCount = 2,
-  totalExpenses = 65000,
-  expensesBurnRatePercent = 54.0,
-  netRetained = 55000,
-  retentionRatePercent = 45.8,
+  totalLiquidity = 0,
+  monthlyInflow = 0,
+  inflowSourcesCount = 0,
+  totalExpenses = 0,
+  expensesBurnRatePercent = 0,
+  netRetained = 0,
+  retentionRatePercent = 0,
   currency = "Rs.",
 }: LiquidityHeroProps) {
   const formattedLiquidity = totalLiquidity.toLocaleString("en-IN");
@@ -121,24 +116,6 @@ export default function LiquidityHero({
                 {currency} {formattedLiquidity}
               </Typography>
 
-              <Box
-                sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 0.25,
-                  px: 1,
-                  py: 0.25,
-                  borderRadius: 1.5,
-                  bgcolor: "rgba(95, 146, 119, 0.12)",
-                  color: "#3F6853",
-                  fontSize: "0.75rem",
-                  fontWeight: 600,
-                  fontFamily: "var(--font-jetbrains-mono), monospace",
-                }}
-              >
-                <ArrowUpwardIcon sx={{ fontSize: 13 }} />
-                <span>+{liquidityTrendPercent.toFixed(1)}%</span>
-              </Box>
             </Box>
 
             {/* Explanatory Subtext */}
@@ -151,7 +128,7 @@ export default function LiquidityHero({
                 lineHeight: 1.5,
               }}
             >
-              Net capital across primary operating and savings reserves vs last calendar cycle.
+              Your current balance across everything you track.
             </Typography>
           </Grid>
 
@@ -184,16 +161,6 @@ export default function LiquidityHero({
                     >
                       Monthly Inflow
                     </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: "0.6875rem",
-                        fontWeight: 600,
-                        color: "#3F6853",
-                        fontFamily: "var(--font-jetbrains-mono), monospace",
-                      }}
-                    >
-                      +{monthlyInflowTrendPercent.toFixed(1)}%
-                    </Typography>
                   </Box>
 
                   <Typography
@@ -210,7 +177,7 @@ export default function LiquidityHero({
                   </Typography>
 
                   <Typography sx={{ fontSize: "0.6875rem", color: "#68717C" }}>
-                    {inflowSourcesCount} primary payrolls
+                    {inflowSourcesCount} {inflowSourcesCount === 1 ? "payment" : "payments"} received this month
                   </Typography>
                 </Box>
               </Grid>
@@ -249,7 +216,7 @@ export default function LiquidityHero({
                         fontFamily: "var(--font-jetbrains-mono), monospace",
                       }}
                     >
-                      {Math.round(expensesBurnRatePercent)}% burned
+                      {Math.round(expensesBurnRatePercent)}% of income
                     </Typography>
                   </Box>
 
@@ -267,7 +234,7 @@ export default function LiquidityHero({
                   </Typography>
 
                   <Typography sx={{ fontSize: "0.6875rem", color: "#68717C" }}>
-                    Under monthly ceiling
+                    Spent this month
                   </Typography>
                 </Box>
               </Grid>
@@ -298,16 +265,6 @@ export default function LiquidityHero({
                     >
                       Net Retained
                     </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: "0.6875rem",
-                        fontWeight: 600,
-                        color: "#3F6853",
-                        fontFamily: "var(--font-jetbrains-mono), monospace",
-                      }}
-                    >
-                      On Target
-                    </Typography>
                   </Box>
 
                   <Typography
@@ -324,7 +281,7 @@ export default function LiquidityHero({
                   </Typography>
 
                   <Typography sx={{ fontSize: "0.6875rem", color: "#68717C" }}>
-                    {retentionRatePercent.toFixed(1)}% rate preserved
+                    {Math.round(retentionRatePercent)}% of income kept
                   </Typography>
                 </Box>
               </Grid>

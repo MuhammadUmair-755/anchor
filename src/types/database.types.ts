@@ -15,6 +15,7 @@ export interface Database {
           email: string | null;
           full_name: string | null;
           avatar_url: string | null;
+          balance: number;
           created_at: string;
           updated_at: string;
         };
@@ -23,6 +24,7 @@ export interface Database {
           email?: string | null;
           full_name?: string | null;
           avatar_url?: string | null;
+          balance?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -31,81 +33,17 @@ export interface Database {
           email?: string | null;
           full_name?: string | null;
           avatar_url?: string | null;
+          balance?: number;
           created_at?: string;
           updated_at?: string;
         };
         Relationships: [];
       };
 
-      accounts: {
-        Row: {
-          id: string;
-          user_id: string;
-          name: string;
-          type: 'checking' | 'cash' | 'savings' | 'credit';
-          institution: string | null;
-          account_number_masked: string | null;
-          balance: number;
-          currency: 'INR' | 'USD' | 'EUR' | 'GBP';
-          status: 'active' | 'reconciled' | 'archived';
-          trend_label: string | null;
-          credit_limit: number | null;
-          payment_due_date: string | null;
-          last_reconciled_at: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          name: string;
-          type: 'checking' | 'cash' | 'savings' | 'credit';
-          institution?: string | null;
-          account_number_masked?: string | null;
-          balance?: number;
-          currency?: 'INR' | 'USD' | 'EUR' | 'GBP';
-          status?: 'active' | 'reconciled' | 'archived';
-          trend_label?: string | null;
-          credit_limit?: number | null;
-          payment_due_date?: string | null;
-          last_reconciled_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          name?: string;
-          type?: 'checking' | 'cash' | 'savings' | 'credit';
-          institution?: string | null;
-          account_number_masked?: string | null;
-          balance?: number;
-          currency?: 'INR' | 'USD' | 'EUR' | 'GBP';
-          status?: 'active' | 'reconciled' | 'archived';
-          trend_label?: string | null;
-          credit_limit?: number | null;
-          payment_due_date?: string | null;
-          last_reconciled_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "accounts_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-
       transactions: {
         Row: {
           id: string;
           user_id: string;
-          account_id: string;
-          destination_account_id: string | null;
           amount: number;
           currency: 'INR' | 'USD' | 'EUR' | 'GBP';
           flow_type: 'inflow' | 'outflow' | 'transfer';
@@ -132,8 +70,6 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
-          account_id: string;
-          destination_account_id?: string | null;
           amount: number;
           currency?: 'INR' | 'USD' | 'EUR' | 'GBP';
           flow_type: 'inflow' | 'outflow' | 'transfer';
@@ -160,8 +96,6 @@ export interface Database {
         Update: {
           id?: string;
           user_id?: string;
-          account_id?: string;
-          destination_account_id?: string | null;
           amount?: number;
           currency?: 'INR' | 'USD' | 'EUR' | 'GBP';
           flow_type?: 'inflow' | 'outflow' | 'transfer';
@@ -191,20 +125,6 @@ export interface Database {
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "transactions_account_id_fkey";
-            columns: ["account_id"];
-            isOneToOne: false;
-            referencedRelation: "accounts";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "transactions_destination_account_id_fkey";
-            columns: ["destination_account_id"];
-            isOneToOne: false;
-            referencedRelation: "accounts";
             referencedColumns: ["id"];
           }
         ];
@@ -342,65 +262,10 @@ export interface Database {
         ];
       };
 
-      projects: {
-        Row: {
-          id: string;
-          user_id: string;
-          title: string;
-          tag: string | null;
-          description: string | null;
-          progress_percentage: number;
-          next_milestone: string | null;
-          target_date: string | null;
-          accent_color: string | null;
-          status: 'active' | 'completed' | 'archived';
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          title: string;
-          tag?: string | null;
-          description?: string | null;
-          progress_percentage?: number;
-          next_milestone?: string | null;
-          target_date?: string | null;
-          accent_color?: string | null;
-          status?: 'active' | 'completed' | 'archived';
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          title?: string;
-          tag?: string | null;
-          description?: string | null;
-          progress_percentage?: number;
-          next_milestone?: string | null;
-          target_date?: string | null;
-          accent_color?: string | null;
-          status?: 'active' | 'completed' | 'archived';
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "projects_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-
       tasks: {
         Row: {
           id: string;
           user_id: string;
-          project_id: string | null;
           title: string;
           priority: 'low' | 'medium' | 'high';
           category: 'work' | 'personal' | 'finance' | 'learning';
@@ -419,7 +284,6 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
-          project_id?: string | null;
           title: string;
           priority?: 'low' | 'medium' | 'high';
           category?: 'work' | 'personal' | 'finance' | 'learning';
@@ -438,7 +302,6 @@ export interface Database {
         Update: {
           id?: string;
           user_id?: string;
-          project_id?: string | null;
           title?: string;
           priority?: 'low' | 'medium' | 'high';
           category?: 'work' | 'personal' | 'finance' | 'learning';
@@ -461,13 +324,6 @@ export interface Database {
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "tasks_project_id_fkey";
-            columns: ["project_id"];
-            isOneToOne: false;
-            referencedRelation: "projects";
-            referencedColumns: ["id"];
           }
         ];
       };
@@ -479,6 +335,7 @@ export interface Database {
           date_key: string;
           entry_number: number | null;
           title: string;
+          body: string;
           snippet: string | null;
           word_count: number;
           reading_time_minutes: number;
@@ -492,7 +349,6 @@ export interface Database {
           quote_attribution: string | null;
           observations: Json;
           micro_observations: Json;
-          linked_project_id: string | null;
           logged_time_info: string | null;
           tags: string[];
           is_pinned: boolean;
@@ -502,9 +358,10 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
-          date_key: string;
+          date_key?: string;
           entry_number?: number | null;
           title: string;
+          body?: string;
           snippet?: string | null;
           word_count?: number;
           reading_time_minutes?: number;
@@ -518,7 +375,6 @@ export interface Database {
           quote_attribution?: string | null;
           observations?: Json;
           micro_observations?: Json;
-          linked_project_id?: string | null;
           logged_time_info?: string | null;
           tags?: string[];
           is_pinned?: boolean;
@@ -531,6 +387,7 @@ export interface Database {
           date_key?: string;
           entry_number?: number | null;
           title?: string;
+          body?: string;
           snippet?: string | null;
           word_count?: number;
           reading_time_minutes?: number;
@@ -544,7 +401,6 @@ export interface Database {
           quote_attribution?: string | null;
           observations?: Json;
           micro_observations?: Json;
-          linked_project_id?: string | null;
           logged_time_info?: string | null;
           tags?: string[];
           is_pinned?: boolean;
@@ -554,55 +410,6 @@ export interface Database {
         Relationships: [
           {
             foreignKeyName: "journal_entries_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "journal_entries_linked_project_id_fkey";
-            columns: ["linked_project_id"];
-            isOneToOne: false;
-            referencedRelation: "projects";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-
-      pinned_maxims: {
-        Row: {
-          id: string;
-          user_id: string;
-          quote: string;
-          attribution: string;
-          source_codex: string | null;
-          is_active: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          quote: string;
-          attribution: string;
-          source_codex?: string | null;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          quote?: string;
-          attribution?: string;
-          source_codex?: string | null;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "pinned_maxims_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
@@ -662,59 +469,6 @@ export interface Database {
         ];
       };
 
-      sovereign_goals: {
-        Row: {
-          id: string;
-          user_id: string;
-          title: string;
-          subtitle: string | null;
-          target_horizon: string | null;
-          progress_percentage: number;
-          achieved_metric: string | null;
-          gap_metric: string | null;
-          meter_color: string | null;
-          target_date: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          title: string;
-          subtitle?: string | null;
-          target_horizon?: string | null;
-          progress_percentage?: number;
-          achieved_metric?: string | null;
-          gap_metric?: string | null;
-          meter_color?: string | null;
-          target_date?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          title?: string;
-          subtitle?: string | null;
-          target_horizon?: string | null;
-          progress_percentage?: number;
-          achieved_metric?: string | null;
-          gap_metric?: string | null;
-          meter_color?: string | null;
-          target_date?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "sovereign_goals_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
     };
     Views: {
       [_ in never]: never;
@@ -723,6 +477,10 @@ export interface Database {
       requesting_user_id: {
         Args: Record<PropertyKey, never>;
         Returns: string;
+      };
+      adjust_balance: {
+        Args: { p_user_id: string; p_delta: number };
+        Returns: number;
       };
     };
     Enums: {

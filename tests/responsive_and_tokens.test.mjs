@@ -180,23 +180,17 @@ runTest('Verify breakpoint synchronization across layout components', () => {
 // ==========================================
 // TEST 4: MobileBottomNav Structure & FAB
 // ==========================================
-runTest('Verify MobileBottomNav 5 destinations and center elevated FAB', () => {
+runTest('Verify MobileBottomNav has 5 tab destinations and no add button', () => {
   const content = fs.readFileSync(
     path.join(ROOT_DIR, 'src/components/layout/MobileBottomNav.tsx'),
     'utf8'
   );
 
-  // Check 5 navigation destinations
-  assert(content.includes('label="Overview"'), 'MobileBottomNav missing Overview');
-  assert(content.includes('label="Finance"'), 'MobileBottomNav missing Finance');
-  assert(content.includes('label="Tasks"'), 'MobileBottomNav missing Tasks');
-  assert(content.includes('label="Profile"'), 'MobileBottomNav missing Profile');
-
-  // Check center FAB elevated spacer
-  assert(content.includes('<Fab'), 'MobileBottomNav must include elevated <Fab');
-  assert(content.includes('aria-label="Quick Entry"'), 'MobileBottomNav Fab missing aria-label');
-  assert(content.includes('top: -20'), 'Fab must have elevated top position');
-  assert(content.includes('zIndex: 1300'), 'Fab must be elevated with proper zIndex');
+  for (const label of ['Overview', 'Finance', 'Tasks', 'Notes', 'Calendar']) {
+    assert(content.includes(`label: "${label}"`), `MobileBottomNav missing ${label}`);
+  }
+  // Adding transactions is scoped to the Finance page, so the footer has no FAB
+  assert(!content.includes('<Fab'), 'MobileBottomNav must not include a FAB');
 });
 
 // ==========================================

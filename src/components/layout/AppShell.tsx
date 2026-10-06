@@ -7,8 +7,6 @@ import DesktopSidebar from "./DesktopSidebar";
 import TopHeader from "./TopHeader";
 import MobileTopBar from "./MobileTopBar";
 import MobileBottomNav from "./MobileBottomNav";
-import MobileNavDrawer from "./MobileNavDrawer";
-import QuickEntryModal from "./QuickEntryModal";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -19,9 +17,6 @@ export default function AppShell({ children }: AppShellProps) {
   const isAuthPage = pathname?.startsWith("/sign-in") || pathname?.startsWith("/sign-up");
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
-  const [mobileNavOpen, setMobileNavOpen] = useState<boolean>(false);
-  const [quickEntryOpen, setQuickEntryOpen] = useState<boolean>(false);
-  const [quickEntryIntent, setQuickEntryIntent] = useState<"spent" | "received" | "moved">("spent");
 
   if (isAuthPage) {
     return (
@@ -40,15 +35,6 @@ export default function AppShell({ children }: AppShellProps) {
       </Box>
     );
   }
-
-  const handleOpenQuickEntry = (intent: "spent" | "received" | "moved" = "spent") => {
-    setQuickEntryIntent(intent);
-    setQuickEntryOpen(true);
-  };
-
-  const handleCloseQuickEntry = () => {
-    setQuickEntryOpen(false);
-  };
 
   const handleToggleSidebar = () => {
     setSidebarCollapsed((prev) => !prev);
@@ -69,7 +55,6 @@ export default function AppShell({ children }: AppShellProps) {
       <DesktopSidebar
         collapsed={sidebarCollapsed}
         onToggleCollapse={handleToggleSidebar}
-        onOpenQuickEntry={() => handleOpenQuickEntry("spent")}
       />
 
       {/* Main Content Area */}
@@ -86,13 +71,11 @@ export default function AppShell({ children }: AppShellProps) {
       >
         {/* Desktop Sticky Header */}
         <Box sx={{ display: { xs: "none", lg: "block" } }}>
-          <TopHeader onOpenQuickEntry={handleOpenQuickEntry} />
+          <TopHeader />
         </Box>
 
         {/* Mobile Sticky Top Bar */}
-        <MobileTopBar
-          onOpenNavDrawer={() => setMobileNavOpen(true)}
-        />
+        <MobileTopBar />
 
         {/* Primary Page Canvas */}
         <Box
@@ -110,25 +93,9 @@ export default function AppShell({ children }: AppShellProps) {
         </Box>
 
         {/* Mobile Fixed Bottom Navigation */}
-        <MobileBottomNav onOpenQuickEntry={() => handleOpenQuickEntry("spent")} />
+        <MobileBottomNav />
       </Box>
 
-      {/* Mobile Navigation Drawer */}
-      <MobileNavDrawer
-        open={mobileNavOpen}
-        onClose={() => setMobileNavOpen(false)}
-        onOpenQuickEntry={() => {
-          setMobileNavOpen(false);
-          handleOpenQuickEntry("spent");
-        }}
-      />
-
-      {/* Quick Entry Dialog */}
-      <QuickEntryModal
-        open={quickEntryOpen}
-        onClose={handleCloseQuickEntry}
-        initialIntent={quickEntryIntent}
-      />
     </Box>
   );
 }

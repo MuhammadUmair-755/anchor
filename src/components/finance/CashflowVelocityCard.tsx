@@ -6,7 +6,6 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import QueryStatsIcon from "@mui/icons-material/QueryStats";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { CashflowVelocity } from "@/types/models";
 
 interface CashflowVelocityCardProps {
@@ -206,63 +205,6 @@ export default function CashflowVelocityCard({
           </Typography>
         </Box>
 
-        {/* Velocity Hotspots Warning Box */}
-        <Box
-          sx={{
-            p: 1.5,
-            bgcolor: "#F0EEE8",
-            borderRadius: "8px",
-            border: "1px solid rgba(17, 28, 46, 0.05)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 1,
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <WarningAmberIcon sx={{ fontSize: 15, color: "#C4934A" }} />
-            <Typography
-              sx={{
-                fontSize: "10px",
-                fontFamily: "var(--font-plus-jakarta-sans), sans-serif",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                color: "#1B1C18",
-              }}
-            >
-              Observed Velocity Hotspots
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-            {velocity.hotspots.map((item, idx) => (
-              <Box
-                key={item.id || idx}
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: "11px",
-                  color: "#45474C",
-                  fontFamily: "var(--font-plus-jakarta-sans), sans-serif",
-                }}
-              >
-                <span>{item.title}</span>
-                <Typography
-                  component="span"
-                  sx={{
-                    fontFamily: "var(--font-jetbrains-mono), monospace",
-                    fontSize: "11px",
-                    fontWeight: 600,
-                    color: item.severity === "critical" ? "#8C3F3B" : item.severity === "warning" ? "#C4934A" : "#1B1C18",
-                    fontFeatureSettings: '"tnum" on, "zero" on',
-                  }}
-                >
-                  {item.metric}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-        </Box>
       </CardContent>
     </Card>
   );

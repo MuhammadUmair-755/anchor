@@ -11,54 +11,20 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import LocalCafeIcon from "@mui/icons-material/LocalCafe";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutlineOutlined";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import Link from "next/link";
 import { TodayDebitItem } from "@/types/models";
 
 export interface TodayDebitsCardProps {
   debits?: TodayDebitItem[];
-  onLogExpense?: () => void;
   currency?: string;
 }
 
 export default function TodayDebitsCard({
   debits,
-  onLogExpense,
   currency = "Rs.",
 }: TodayDebitsCardProps) {
-  const defaultDebits: TodayDebitItem[] = [
-    {
-      id: "debit-1",
-      title: "Blue Tokai Coffee & Lunch",
-      category: "Food · Cash wallet",
-      paymentMethod: "Cash wallet",
-      amount: 850,
-      currency: "INR",
-      time: "08:15 AM",
-      icon: "local_cafe",
-    },
-    {
-      id: "debit-2",
-      title: "Metro & Uber Cab",
-      category: "Transit · HDFC Bank",
-      paymentMethod: "HDFC Bank",
-      amount: 300,
-      currency: "INR",
-      time: "10:15 AM",
-      icon: "local_taxi",
-    },
-    {
-      id: "debit-3",
-      title: "Technical Publication Sub",
-      category: "Books · Amex Platinum",
-      paymentMethod: "Amex Platinum",
-      amount: 150,
-      currency: "INR",
-      time: "11:45 AM",
-      icon: "menu_book",
-    },
-  ];
-
-  const currentDebits = debits && debits.length > 0 ? debits : defaultDebits;
+  const currentDebits = debits ?? [];
   const totalSum = currentDebits.reduce((acc, curr) => acc + curr.amount, 0);
 
   const getDebitIcon = (iconName: string) => {
@@ -130,6 +96,11 @@ export default function TodayDebitsCard({
 
         {/* Itemized Debit Entries */}
         <Stack spacing={1.5}>
+          {currentDebits.length === 0 && (
+            <Typography sx={{ fontSize: "0.8125rem", color: "#68717C", py: 3, textAlign: "center" }}>
+              No spending recorded today.
+            </Typography>
+          )}
           {currentDebits.map((item) => (
             <Box
               key={item.id}
@@ -213,12 +184,13 @@ export default function TodayDebitsCard({
         }}
       >
         <Typography sx={{ fontSize: "0.75rem", color: "#68717C" }}>
-          {currentDebits.length} recorded transactions
+          {currentDebits.length} {currentDebits.length === 1 ? "transaction" : "transactions"} today
         </Typography>
 
         <Button
-          onClick={onLogExpense}
-          startIcon={<AddCircleOutlineIcon sx={{ fontSize: 16 }} />}
+          component={Link}
+          href="/finance"
+          endIcon={<ArrowForwardIcon sx={{ fontSize: 16 }} />}
           sx={{
             fontSize: "0.75rem",
             fontWeight: 600,
@@ -231,7 +203,7 @@ export default function TodayDebitsCard({
             },
           }}
         >
-          + Log Expense
+          Open Finance
         </Button>
       </Box>
     </Card>

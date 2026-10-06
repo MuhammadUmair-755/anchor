@@ -52,18 +52,10 @@ export default function LedgerSection({
     { key: "knowledge_subs", label: "Subscriptions" },
   ];
 
-  const accounts = [
-    { key: "all", label: "All Accounts" },
-    { key: "acc_bank_01", label: "Bank" },
-    { key: "acc_cash_02", label: "Cash" },
-    { key: "acc_amex_04", label: "Credit Card" },
-  ];
-
   const flowTypes: { key: FlowType | "all"; label: string }[] = [
     { key: "all", label: "All" },
     { key: "inflow", label: "Inflow (+)" },
     { key: "outflow", label: "Outflow (-)" },
-    { key: "transfer", label: "Transfers" },
   ];
 
   // Resolve category icon
@@ -280,13 +272,13 @@ export default function LedgerSection({
             })}
           </Box>
 
-          {/* Account & Flow Type Bar */}
+          {/* Flow Type Bar */}
           <Box
             sx={{
               display: "flex",
               flexDirection: { xs: "column", sm: "row" },
               alignItems: { xs: "stretch", sm: "center" },
-              justifyContent: "space-between",
+              justifyContent: "flex-end",
               gap: 1.5,
               pt: 1,
               borderTop: "1px solid rgba(17, 28, 46, 0.05)",
@@ -294,59 +286,6 @@ export default function LedgerSection({
               maxWidth: "100%",
             }}
           >
-            {/* Account Pills */}
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                alignItems: "center",
-                gap: 0.75,
-                minWidth: 0,
-                maxWidth: "100%",
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  fontFamily: "var(--font-plus-jakarta-sans), sans-serif",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  color: "#75777D",
-                  mr: 0.5,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Account:
-              </Typography>
-              {accounts.map((acc) => {
-                const isSelected = (filterCriteria.accountId || "all") === acc.key;
-                return (
-                  <Button
-                    key={acc.key}
-                    size="small"
-                    onClick={() => onFilterChange({ accountId: acc.key, page: 1 })}
-                    sx={{
-                      px: 1.25,
-                      py: 0.25,
-                      borderRadius: "4px",
-                      fontSize: "12px",
-                      fontWeight: isSelected ? 600 : 400,
-                      textTransform: "none",
-                      bgcolor: isSelected ? "#F0EEE8" : "transparent",
-                      color: isSelected ? "#1B1C18" : "#45474C",
-                      "&:hover": {
-                        bgcolor: "#F0EEE8",
-                        color: "#1B1C18",
-                      },
-                    }}
-                  >
-                    {acc.label}
-                  </Button>
-                );
-              })}
-            </Box>
-
             {/* Inflow / Outflow Flow Type Segmented Toggle */}
             <Box
               sx={{
@@ -412,7 +351,7 @@ export default function LedgerSection({
           Object.entries(groupedTransactions).map(([dateStr, items]) => {
             // Compute group balance delta
             const groupSum = items.reduce((sum, item) => {
-              return item.flowType === "inflow" ? sum + item.amount : sum - item.amount;
+              return sum + item.amount; // amounts are already signed
             }, 0);
             const isGroupPositive = groupSum >= 0;
 
@@ -527,7 +466,7 @@ export default function LedgerSection({
                                 color: "#75777D",
                               }}
                             >
-                              {tx.categoryLabel} · {tx.accountName}
+                              {tx.categoryLabel}
                             </Typography>
                           </Box>
                         </Box>
@@ -542,7 +481,7 @@ export default function LedgerSection({
                               fontFeatureSettings: '"tnum" on, "zero" on',
                             }}
                           >
-                            {isInflow ? "+" : "-"}Rs. {tx.amount.toLocaleString()}
+                            {isInflow ? "+" : "-"}Rs. {Math.abs(tx.amount).toLocaleString()}
                           </Typography>
                           <Typography
                             sx={{

@@ -6,377 +6,304 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
-import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import InputAdornment from "@mui/material/InputAdornment";
-import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
-import { QuickEntryPayload, FlowType, TransactionCategory } from "@/types/models";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 
-interface AddTransactionModalProps {
+import { QuickEntryPayload, Transaction, TransactionCategory } from "@/types/models";
+import { financeService } from "@/services/financeService";
+
+interface QuickEntryModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (payload: QuickEntryPayload) => Promise<void>;
+  onSuccess?: (transaction: Transaction) => void;
+  initialIntent?: "spent" | "received";
 }
 
-export default function AddTransactionModal({
-  open,
+const CATEGORY_OPTIONS: { value: TransactionCategory; label: string }[] = [
+  { value: "food_dining", label: "Food & Dining" },
+  { value: "housing_utilities", label: "Housing & Utilities" },
+  { value: "transport_transit", label: "Transport & Transit" },
+  { value: "shopping_gear", label: "Shopping & Gear" },
+  { value: "health_wellness", label: "Health & Wellness" },
+  { value: "knowledge_subs", label: "Knowledge & Subscriptions" },
+  { value: "consulting_inflow", label: "Consulting Inflow" },
+  { value: "salary_payroll", label: "Salary / Payroll" },
+  { value: "other", label: "Other / General" },
+];
+
+interface QuickEntryFormProps {
+  initialIntent: "spent" | "received";
+  onClose: () => void;
+  onSuccess?: (transaction: Transaction) => void;
+}
+
+function QuickEntryForm({
+  initialIntent,
   onClose,
-  onSubmit,
-}: AddTransactionModalProps) {
-  const [flowType, setFlowType] = useState<FlowType>("outflow");
+  onSuccess,
+}: QuickEntryFormProps) {
+  const [intent, setIntent] = useState<"spent" | "received">(initialIntent);
   const [amount, setAmount] = useState<string>("");
-  const [payee, setPayee] = useState<string>("");
-  const [category, setCategory] = useState<string>("food_dining");
-  const [accountId, setAccountId] = useState<string>("acc_bank_01");
-  const [date, setDate] = useState<string>("2026-09-11");
-  const [note, setNote] = useState<string>("");
-  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [category, setCategory] = useState<TransactionCategory>("food_dining");
+  const [date, setDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [memo, setMemo] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [errorMsg, setErrorMsg] = useState<string>("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanAmount = parseFloat(amount.replace(/,/g, ""));
-    if (isNaN(cleanAmount) || cleanAmount <= 0) return;
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setErrorMsg("");
 
-    setSubmitting(true);
+    const parsedAmount = parseFloat(amount);
+    if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
+      setErrorMsg("Please enter a valid amount greater than zero.");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      const intent: "spent" | "received" | "moved" =
-        flowType === "outflow" ? "spent" : flowType === "inflow" ? "received" : "moved";
-
-      await onSubmit({
+      const payload: QuickEntryPayload = {
         intent,
-        amount: cleanAmount,
+        amount: parsedAmount,
         currency: "INR",
-        category: category as TransactionCategory,
-        accountId,
-        date,
-        memo: note ? `${payee ? payee + " · " : ""}${note}` : payee || undefined,
-      });
-      // Reset
+        category,
+        date: date || new Date().toISOString().slice(0, 10),
+        memo: memo.trim() || undefined,
+      };
+
+      const newTx = await financeService.recordTransaction(payload);
       setAmount("");
-      setPayee("");
-      setNote("");
+      setMemo("");
+      if (onSuccess) {
+        onSuccess(newTx);
+      }
       onClose();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to record transaction";
+      setErrorMsg(message);
     } finally {
-      setSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      slotProps={{
-        paper: {
-          sx: {
-            bgcolor: "#FCFBF8",
-            border: "1px solid rgba(17, 28, 46, 0.12)",
-            borderRadius: "12px",
-            boxShadow: "0 12px 32px -4px rgba(11,22,40,0.12)",
-          },
-        },
-      }}
-    >
-      <DialogTitle
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          pb: 1.5,
-          borderBottom: "1px solid rgba(17, 28, 46, 0.08)",
-        }}
-      >
-        <Typography
-          component="span"
-          sx={{
-            fontFamily: "var(--font-plus-jakarta-sans), sans-serif",
-            fontSize: "16px",
-            fontWeight: 700,
-            color: "#1B1C18",
-          }}
-        >
-          Add Transaction
-        </Typography>
-        <IconButton size="small" onClick={onClose} sx={{ color: "#75777D" }}>
-          <CloseIcon sx={{ fontSize: 18 }} />
-        </IconButton>
-      </DialogTitle>
-
-      <form onSubmit={handleSubmit}>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2.5 }}>
-          {/* Flow Type Toggle */}
+    <form onSubmit={handleSubmit}>
+      <DialogContent sx={{ px: 3, py: 2 }}>
+        <Stack spacing={2.5}>
+          {/* Intent Switcher */}
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 0.5,
-              bgcolor: "#F0EEE8",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: 1,
               p: 0.5,
-              borderRadius: "8px",
+              bgcolor: "#F0EEE8",
+              borderRadius: 2,
             }}
           >
             <Button
               size="small"
-              onClick={() => setFlowType("outflow")}
+              onClick={() => setIntent("spent")}
+              startIcon={<ArrowDownwardIcon sx={{ fontSize: 16 }} />}
               sx={{
-                py: 0.75,
-                borderRadius: "6px",
-                fontSize: "11px",
-                fontWeight: flowType === "outflow" ? 600 : 500,
-                textTransform: "none",
-                bgcolor: flowType === "outflow" ? "#111C2E" : "transparent",
-                color: flowType === "outflow" ? "#FFFFFF" : "#45474C",
-                boxShadow: flowType === "outflow" ? "0 1px 3px rgba(17,28,46,0.15)" : "none",
+                bgcolor: intent === "spent" ? "#FFFFFF" : "transparent",
+                color: intent === "spent" ? "#8C3F3B" : "#68717C",
+                boxShadow: intent === "spent" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+                fontWeight: intent === "spent" ? 600 : 500,
+                "&:hover": {
+                  bgcolor: intent === "spent" ? "#FFFFFF" : "rgba(0,0,0,0.04)",
+                },
               }}
             >
-              Outflow (-)
+              I spent
             </Button>
             <Button
               size="small"
-              onClick={() => setFlowType("inflow")}
+              onClick={() => setIntent("received")}
+              startIcon={<ArrowUpwardIcon sx={{ fontSize: 16 }} />}
               sx={{
-                py: 0.75,
-                borderRadius: "6px",
-                fontSize: "11px",
-                fontWeight: flowType === "inflow" ? 600 : 500,
-                textTransform: "none",
-                bgcolor: flowType === "inflow" ? "#111C2E" : "transparent",
-                color: flowType === "inflow" ? "#FFFFFF" : "#45474C",
-                boxShadow: flowType === "inflow" ? "0 1px 3px rgba(17,28,46,0.15)" : "none",
+                bgcolor: intent === "received" ? "#FFFFFF" : "transparent",
+                color: intent === "received" ? "#3F6853" : "#68717C",
+                boxShadow: intent === "received" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+                fontWeight: intent === "received" ? 600 : 500,
+                "&:hover": {
+                  bgcolor: intent === "received" ? "#FFFFFF" : "rgba(0,0,0,0.04)",
+                },
               }}
             >
-              Inflow (+)
-            </Button>
-            <Button
-              size="small"
-              onClick={() => setFlowType("transfer")}
-              sx={{
-                py: 0.75,
-                borderRadius: "6px",
-                fontSize: "11px",
-                fontWeight: flowType === "transfer" ? 600 : 500,
-                textTransform: "none",
-                bgcolor: flowType === "transfer" ? "#111C2E" : "transparent",
-                color: flowType === "transfer" ? "#FFFFFF" : "#45474C",
-                boxShadow: flowType === "transfer" ? "0 1px 3px rgba(17,28,46,0.15)" : "none",
-              }}
-            >
-              Transfer
+              I received
             </Button>
           </Box>
 
-          {/* Amount */}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-            <Typography
-              sx={{
-                fontSize: "11px",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                color: "#75777D",
-                fontFamily: "var(--font-plus-jakarta-sans), sans-serif",
-              }}
-            >
-              Amount (Rs.)
-            </Typography>
+          {/* Amount Field */}
+          <Box>
             <TextField
-              required
               fullWidth
-              size="small"
+              label="Amount"
+              type="number"
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              autoFocus
               slotProps={{
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Typography sx={{ fontWeight: 600, color: "#75777D", fontFamily: "var(--font-jetbrains-mono), monospace" }}>
+                      <Typography
+                        sx={{
+                          fontFamily: "var(--font-jetbrains-mono), monospace",
+                          fontWeight: 600,
+                          color: "#0B1628",
+                        }}
+                      >
                         Rs.
                       </Typography>
                     </InputAdornment>
                   ),
                   sx: {
-                    fontSize: "16px",
-                    fontWeight: 700,
                     fontFamily: "var(--font-jetbrains-mono), monospace",
-                    bgcolor: "#F7F5EF",
-                    borderRadius: "8px",
+                    fontSize: "1.25rem",
+                    fontWeight: 600,
                   },
                 },
               }}
             />
           </Box>
 
-          {/* Payee / Description */}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-            <Typography
-              sx={{
-                fontSize: "11px",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                color: "#75777D",
-                fontFamily: "var(--font-plus-jakarta-sans), sans-serif",
-              }}
+          {/* Category & Date Grid */}
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
+            <TextField
+              select
+              fullWidth
+              label="Category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value as TransactionCategory)}
             >
-              Payee / Entity
-            </Typography>
+              {CATEGORY_OPTIONS.map((cat) => (
+                <MenuItem key={cat.value} value={cat.value}>
+                  {cat.label}
+                </MenuItem>
+              ))}
+            </TextField>
+
             <TextField
               fullWidth
-              size="small"
-              placeholder="e.g. Acme Corp / Blue Tokai"
-              value={payee}
-              onChange={(e) => setPayee(e.target.value)}
+              label="Date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
               slotProps={{
-                input: {
-                  sx: { fontSize: "13px", bgcolor: "#F7F5EF", borderRadius: "8px" },
-                },
+                inputLabel: { shrink: true },
               }}
             />
           </Box>
 
-          {/* Category & Account */}
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-              <Typography
-                sx={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  color: "#75777D",
-                  fontFamily: "var(--font-plus-jakarta-sans), sans-serif",
-                }}
-              >
-                Category
-              </Typography>
-              <Select
-                size="small"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                sx={{ fontSize: "13px", bgcolor: "#F7F5EF", borderRadius: "8px" }}
-              >
-                <MenuItem value="food_dining">Food &amp; Dining</MenuItem>
-                <MenuItem value="housing_utilities">Housing &amp; Utilities</MenuItem>
-                <MenuItem value="transport_transit">Transport &amp; Transit</MenuItem>
-                <MenuItem value="shopping_gear">Shopping &amp; Gear</MenuItem>
-                <MenuItem value="health_wellness">Health &amp; Wellness</MenuItem>
-                <MenuItem value="knowledge_subs">Knowledge &amp; Subscriptions</MenuItem>
-                <MenuItem value="consulting_inflow">Consulting Inflow</MenuItem>
-                <MenuItem value="salary_payroll">Salary / Payroll</MenuItem>
-              </Select>
-            </Box>
+          {/* Memo / Description */}
+          <TextField
+            fullWidth
+            label="Merchant / Note"
+            placeholder="e.g. Blue Tokai Coffee Roasters"
+            value={memo}
+            onChange={(e) => setMemo(e.target.value)}
+          />
 
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-              <Typography
-                sx={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  color: "#75777D",
-                  fontFamily: "var(--font-plus-jakarta-sans), sans-serif",
-                }}
-              >
-                Account
-              </Typography>
-              <Select
-                size="small"
-                value={accountId}
-                onChange={(e) => setAccountId(e.target.value)}
-                sx={{ fontSize: "13px", bgcolor: "#F7F5EF", borderRadius: "8px" }}
-              >
-                <MenuItem value="acc_bank_01">Operating Bank ••4092</MenuItem>
-                <MenuItem value="acc_cash_02">Physical Vault (Cash)</MenuItem>
-                <MenuItem value="acc_vault_03">High-Yield Vault</MenuItem>
-                <MenuItem value="acc_amex_04">Amex Platinum ••1042</MenuItem>
-              </Select>
-            </Box>
-          </Box>
+          {errorMsg && (
+            <Typography variant="body2" sx={{ color: "#8C3F3B", fontWeight: 500 }}>
+              {errorMsg}
+            </Typography>
+          )}
+        </Stack>
+      </DialogContent>
 
-          {/* Date & Note */}
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-              <Typography
-                sx={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  color: "#75777D",
-                  fontFamily: "var(--font-plus-jakarta-sans), sans-serif",
-                }}
-              >
-                Date
-              </Typography>
-              <TextField
-                type="date"
-                size="small"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                slotProps={{
-                  input: {
-                    sx: { fontSize: "13px", bgcolor: "#F7F5EF", borderRadius: "8px" },
-                  },
-                }}
-              />
-            </Box>
+      <DialogActions sx={{ px: 3, pb: 2.5, pt: 1, gap: 1 }}>
+        <Button onClick={onClose} color="inherit" disabled={isSubmitting}>
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={isSubmitting}
+          sx={{
+            px: 3,
+            backgroundColor: "#0B1628",
+            "&:hover": { backgroundColor: "#162338" },
+          }}
+        >
+          {isSubmitting ? "Recording..." : "Save Transaction ↵"}
+        </Button>
+      </DialogActions>
+    </form>
+  );
+}
 
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-              <Typography
-                sx={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  color: "#75777D",
-                  fontFamily: "var(--font-plus-jakarta-sans), sans-serif",
-                }}
-              >
-                Memo / Note
-              </Typography>
-              <TextField
-                size="small"
-                placeholder="Optional memo..."
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                slotProps={{
-                  input: {
-                    sx: { fontSize: "13px", bgcolor: "#F7F5EF", borderRadius: "8px" },
-                  },
-                }}
-              />
-            </Box>
-          </Box>
-        </DialogContent>
-
-        <DialogActions sx={{ p: 2.5, pt: 1, borderTop: "1px solid rgba(17, 28, 46, 0.08)" }}>
-          <Button onClick={onClose} sx={{ color: "#75777D", textTransform: "none" }}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={submitting}
+export default function QuickEntryModal({
+  open,
+  onClose,
+  onSuccess,
+  initialIntent = "spent",
+}: QuickEntryModalProps) {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      aria-labelledby="quick-entry-dialog-title"
+    >
+      <DialogTitle
+        id="quick-entry-dialog-title"
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          pb: 1,
+          pt: 2.5,
+          px: 3,
+        }}
+      >
+        <Box>
+          <Typography
+            component="span"
             sx={{
-              bgcolor: "#111C2E",
-              color: "#FFFFFF",
-              borderRadius: "8px",
-              textTransform: "none",
-              fontWeight: 600,
-              px: 3,
-              "&:hover": { bgcolor: "#000000" },
+              fontFamily: "var(--font-newsreader), Georgia, serif",
+              fontSize: "1.375rem",
+              fontWeight: 500,
+              color: "#0B1628",
+              display: "block",
             }}
           >
-            {submitting ? "Recording..." : "Record Transaction"}
-          </Button>
-        </DialogActions>
-      </form>
+            Add Transaction
+          </Typography>
+          <Typography variant="caption" sx={{ color: "#68717C" }}>
+            Record money spent or received
+          </Typography>
+        </Box>
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          size="small"
+          sx={{ color: "#68717C" }}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+
+      {open && (
+        <QuickEntryForm
+          key={initialIntent}
+          initialIntent={initialIntent}
+          onClose={onClose}
+          onSuccess={onSuccess}
+        />
+      )}
     </Dialog>
   );
 }

@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   email TEXT UNIQUE,
   full_name TEXT,
   avatar_url TEXT,
+  balance NUMERIC(14, 2) NOT NULL DEFAULT 0.00, -- single source of truth for user funds
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
@@ -48,31 +49,20 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 -- 4. FINANCIAL LEDGER & TREASURY
 -- ==============================================================================
 
--- Financial depository / credit accounts
-CREATE TABLE IF NOT EXISTS public.accounts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  type TEXT NOT NULL CHECK (type IN ('checking', 'cash', 'savings', 'credit')),
-  institution TEXT,
-  account_number_masked TEXT,
-  balance NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
-  currency TEXT NOT NULL DEFAULT 'INR' CHECK (currency IN ('INR', 'USD', 'EUR', 'GBP')),
-  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'reconciled', 'archived')),
-  trend_label TEXT,
-  credit_limit NUMERIC(14, 2),
-  payment_due_date DATE,
-  last_reconciled_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
-);
+-- Atomic balance adjustment (server/service_role only)
+CREATE OR REPLACE FUNCTION public.adjust_balance(p_user_id TEXT, p_delta NUMERIC)
+RETURNS NUMERIC
+LANGUAGE sql
+AS $$
+  UPDATE public.profiles SET balance = balance + p_delta WHERE id = p_user_id RETURNING balance;
+$$;
+REVOKE EXECUTE ON FUNCTION public.adjust_balance(TEXT, NUMERIC) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.adjust_balance(TEXT, NUMERIC) TO service_role;
 
 -- Financial transactions ledger
 CREATE TABLE IF NOT EXISTS public.transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  account_id UUID NOT NULL REFERENCES public.accounts(id) ON DELETE CASCADE,
-  destination_account_id UUID REFERENCES public.accounts(id) ON DELETE SET NULL,
   amount NUMERIC(14, 2) NOT NULL, -- Positive for inflow, negative for outflow
   currency TEXT NOT NULL DEFAULT 'INR' CHECK (currency IN ('INR', 'USD', 'EUR', 'GBP')),
   flow_type TEXT NOT NULL CHECK (flow_type IN ('inflow', 'outflow', 'transfer')),
@@ -144,27 +134,10 @@ CREATE TABLE IF NOT EXISTS public.recurring_obligations (
 -- 5. TASKS & OPERATIONAL PROJECTS
 -- ==============================================================================
 
--- Operational projects
-CREATE TABLE IF NOT EXISTS public.projects (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  tag TEXT,
-  description TEXT,
-  progress_percentage INTEGER NOT NULL DEFAULT 0 CHECK (progress_percentage >= 0 AND progress_percentage <= 100),
-  next_milestone TEXT,
-  target_date DATE,
-  accent_color TEXT,
-  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed', 'archived')),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
-);
-
 -- Actionable tasks
 CREATE TABLE IF NOT EXISTS public.tasks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  project_id UUID REFERENCES public.projects(id) ON DELETE SET NULL,
   title TEXT NOT NULL,
   priority TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
   category TEXT NOT NULL DEFAULT 'work' CHECK (category IN ('work', 'personal', 'finance', 'learning')),
@@ -189,9 +162,10 @@ CREATE TABLE IF NOT EXISTS public.tasks (
 CREATE TABLE IF NOT EXISTS public.journal_entries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  date_key DATE NOT NULL,
+  date_key DATE NOT NULL DEFAULT CURRENT_DATE,
   entry_number INTEGER,
   title TEXT NOT NULL,
+  body TEXT NOT NULL DEFAULT '',
   snippet TEXT,
   word_count INTEGER NOT NULL DEFAULT 0,
   reading_time_minutes INTEGER NOT NULL DEFAULT 1,
@@ -205,23 +179,9 @@ CREATE TABLE IF NOT EXISTS public.journal_entries (
   quote_attribution TEXT,
   observations JSONB NOT NULL DEFAULT '[]'::jsonb,
   micro_observations JSONB NOT NULL DEFAULT '{"time": "", "items": []}'::jsonb,
-  linked_project_id UUID REFERENCES public.projects(id) ON DELETE SET NULL,
   logged_time_info TEXT,
   tags TEXT[] NOT NULL DEFAULT '{}',
   is_pinned BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
-  CONSTRAINT journal_entries_user_date_key UNIQUE (user_id, date_key)
-);
-
--- Pinned codex axioms and maxims
-CREATE TABLE IF NOT EXISTS public.pinned_maxims (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  quote TEXT NOT NULL,
-  attribution TEXT NOT NULL,
-  source_codex TEXT,
-  is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
@@ -245,22 +205,6 @@ CREATE TABLE IF NOT EXISTS public.calendar_events (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
--- Sovereign horizon goals
-CREATE TABLE IF NOT EXISTS public.sovereign_goals (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  subtitle TEXT,
-  target_horizon TEXT,
-  progress_percentage INTEGER NOT NULL DEFAULT 0 CHECK (progress_percentage >= 0 AND progress_percentage <= 100),
-  achieved_metric TEXT,
-  gap_metric TEXT,
-  meter_color TEXT,
-  target_date DATE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
-);
-
 -- ==============================================================================
 -- 8. INDEXES FOR PERFORMANCE
 -- ==============================================================================
@@ -269,12 +213,9 @@ CREATE TABLE IF NOT EXISTS public.sovereign_goals (
 CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
 
 -- Accounts
-CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON public.accounts(user_id);
-CREATE INDEX IF NOT EXISTS idx_accounts_status ON public.accounts(user_id, status);
 
 -- Transactions
 CREATE INDEX IF NOT EXISTS idx_transactions_user_date ON public.transactions(user_id, date DESC);
-CREATE INDEX IF NOT EXISTS idx_transactions_account ON public.transactions(account_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_user_category ON public.transactions(user_id, category);
 CREATE INDEX IF NOT EXISTS idx_transactions_user_flow ON public.transactions(user_id, flow_type);
 
@@ -285,12 +226,10 @@ CREATE INDEX IF NOT EXISTS idx_budget_envelopes_user_cycle ON public.budget_enve
 CREATE INDEX IF NOT EXISTS idx_recurring_obligations_user ON public.recurring_obligations(user_id, status);
 
 -- Projects
-CREATE INDEX IF NOT EXISTS idx_projects_user_status ON public.projects(user_id, status);
 
 -- Tasks
 CREATE INDEX IF NOT EXISTS idx_tasks_user_tab ON public.tasks(user_id, tab_category);
 CREATE INDEX IF NOT EXISTS idx_tasks_user_completed ON public.tasks(user_id, is_completed, due_date);
-CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON public.tasks(project_id);
 
 -- Journal Entries
 CREATE INDEX IF NOT EXISTS idx_journal_entries_user_date ON public.journal_entries(user_id, date_key DESC);
@@ -298,14 +237,12 @@ CREATE INDEX IF NOT EXISTS idx_journal_entries_user_pinned ON public.journal_ent
 CREATE INDEX IF NOT EXISTS idx_journal_entries_mood ON public.journal_entries(user_id, mood_tag);
 
 -- Pinned Maxims
-CREATE INDEX IF NOT EXISTS idx_pinned_maxims_user ON public.pinned_maxims(user_id, is_active);
 
 -- Calendar Events
 CREATE INDEX IF NOT EXISTS idx_calendar_events_user_date ON public.calendar_events(user_id, date);
 CREATE INDEX IF NOT EXISTS idx_calendar_events_type ON public.calendar_events(user_id, type);
 
 -- Sovereign Goals
-CREATE INDEX IF NOT EXISTS idx_sovereign_goals_user ON public.sovereign_goals(user_id);
 
 -- ==============================================================================
 -- 9. TRIGGERS: AUTOMATIC updated_at MAINTENANCE
@@ -316,9 +253,6 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_profiles_updated_at') THEN
     CREATE TRIGGER trg_profiles_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_accounts_updated_at') THEN
-    CREATE TRIGGER trg_accounts_updated_at BEFORE UPDATE ON public.accounts FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
-  END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_transactions_updated_at') THEN
     CREATE TRIGGER trg_transactions_updated_at BEFORE UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
   END IF;
@@ -328,23 +262,14 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_recurring_obligations_updated_at') THEN
     CREATE TRIGGER trg_recurring_obligations_updated_at BEFORE UPDATE ON public.recurring_obligations FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_projects_updated_at') THEN
-    CREATE TRIGGER trg_projects_updated_at BEFORE UPDATE ON public.projects FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
-  END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_tasks_updated_at') THEN
     CREATE TRIGGER trg_tasks_updated_at BEFORE UPDATE ON public.tasks FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_journal_entries_updated_at') THEN
     CREATE TRIGGER trg_journal_entries_updated_at BEFORE UPDATE ON public.journal_entries FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_pinned_maxims_updated_at') THEN
-    CREATE TRIGGER trg_pinned_maxims_updated_at BEFORE UPDATE ON public.pinned_maxims FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
-  END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_calendar_events_updated_at') THEN
     CREATE TRIGGER trg_calendar_events_updated_at BEFORE UPDATE ON public.calendar_events FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_sovereign_goals_updated_at') THEN
-    CREATE TRIGGER trg_sovereign_goals_updated_at BEFORE UPDATE ON public.sovereign_goals FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
   END IF;
 END $$;
 
@@ -354,16 +279,12 @@ END $$;
 
 -- Enable RLS across all tables
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budget_envelopes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.recurring_obligations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.journal_entries ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.pinned_maxims ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.calendar_events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.sovereign_goals ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: Authenticated users manage own profile
 CREATE POLICY "profiles_select_own" ON public.profiles FOR SELECT USING (id = public.requesting_user_id());
@@ -372,11 +293,6 @@ CREATE POLICY "profiles_update_own" ON public.profiles FOR UPDATE USING (id = pu
 CREATE POLICY "profiles_delete_own" ON public.profiles FOR DELETE USING (id = public.requesting_user_id());
 
 -- Accounts
-CREATE POLICY "accounts_user_policy" ON public.accounts FOR ALL
-  USING (user_id = public.requesting_user_id())
-  WITH CHECK (user_id = public.requesting_user_id());
-
--- Transactions
 CREATE POLICY "transactions_user_policy" ON public.transactions FOR ALL
   USING (user_id = public.requesting_user_id())
   WITH CHECK (user_id = public.requesting_user_id());
@@ -392,10 +308,6 @@ CREATE POLICY "recurring_obligations_user_policy" ON public.recurring_obligation
   WITH CHECK (user_id = public.requesting_user_id());
 
 -- Projects
-CREATE POLICY "projects_user_policy" ON public.projects FOR ALL
-  USING (user_id = public.requesting_user_id())
-  WITH CHECK (user_id = public.requesting_user_id());
-
 -- Tasks
 CREATE POLICY "tasks_user_policy" ON public.tasks FOR ALL
   USING (user_id = public.requesting_user_id())
@@ -407,16 +319,9 @@ CREATE POLICY "journal_entries_user_policy" ON public.journal_entries FOR ALL
   WITH CHECK (user_id = public.requesting_user_id());
 
 -- Pinned Maxims
-CREATE POLICY "pinned_maxims_user_policy" ON public.pinned_maxims FOR ALL
-  USING (user_id = public.requesting_user_id())
-  WITH CHECK (user_id = public.requesting_user_id());
-
 -- Calendar Events
 CREATE POLICY "calendar_events_user_policy" ON public.calendar_events FOR ALL
   USING (user_id = public.requesting_user_id())
   WITH CHECK (user_id = public.requesting_user_id());
 
 -- Sovereign Goals
-CREATE POLICY "sovereign_goals_user_policy" ON public.sovereign_goals FOR ALL
-  USING (user_id = public.requesting_user_id())
-  WITH CHECK (user_id = public.requesting_user_id());

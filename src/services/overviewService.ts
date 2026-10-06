@@ -1,106 +1,48 @@
-import {
-  DailyTask,
-  BudgetEnvelope,
-  ExecutiveOverviewData,
-} from '@/types/models';
-import { mockOverviewData } from './mockData';
+import { DailyTask, TaskItem, ExecutiveOverviewData, TransactionCategory } from '@/types/models';
+import { apiRequest } from '@/lib/api/client';
 
-// Mutable in-memory store initialized with authoritative mock state
-let state: ExecutiveOverviewData = JSON.parse(JSON.stringify(mockOverviewData));
+const toDailyTask = (t: TaskItem): DailyTask => ({
+  id: t.id,
+  title: t.title,
+  category: t.category as DailyTask['category'],
+  categoryLabel: t.categoryLabel || t.category.toUpperCase(),
+  priority: t.priority,
+  isCompleted: t.isCompleted,
+  dueInfo: t.dueInfo,
+  createdAt: t.createdAt,
+  completedAt: t.completedAt,
+});
 
-/**
- * Overview Service - Decoupled asynchronous business logic for Executive Overview
- */
+/** Overview API client. Stateless; every call throws on failure so the UI can report it. */
 export const overviewService = {
-  /**
-   * Retrieves executive overview aggregated data
-   */
-  async getOverviewData(): Promise<ExecutiveOverviewData> {
-    return JSON.parse(JSON.stringify(state));
+  getOverviewData(): Promise<ExecutiveOverviewData> {
+    return apiRequest<ExecutiveOverviewData>('/api/overview');
   },
 
-  /**
-   * Toggles task completion state
-   */
-  async toggleTask(taskId: string): Promise<DailyTask> {
-    const taskIndex = state.dailyTasks.findIndex((t) => t.id === taskId);
-    if (taskIndex === -1) {
-      throw new Error(`Task with id "${taskId}" not found.`);
-    }
-
-    const task = state.dailyTasks[taskIndex];
-    const isCompleted = !task.isCompleted;
-    const updatedTask: DailyTask = {
-      ...task,
-      isCompleted,
-      completedAt: isCompleted ? new Date().toISOString() : undefined,
-      dueInfo: isCompleted
-        ? `Completed ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-        : task.dueInfo,
-    };
-
-    state.dailyTasks[taskIndex] = updatedTask;
-    return JSON.parse(JSON.stringify(updatedTask));
+  async setTaskCompleted(taskId: string, isCompleted: boolean): Promise<DailyTask> {
+    const task = await apiRequest<TaskItem>(`/api/tasks/${taskId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isCompleted }),
+    });
+    return toDailyTask(task);
   },
 
-  /**
-   * Adds a new daily task
-   */
-  async addTask(task: Omit<DailyTask, 'id' | 'createdAt'>): Promise<DailyTask> {
-    const newTask: DailyTask = {
-      ...task,
-      id: `task-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      createdAt: new Date().toISOString(),
-    };
-
-    state.dailyTasks.unshift(newTask);
-    return JSON.parse(JSON.stringify(newTask));
+  /** Tasks added from "Today's Focus" are due today. */
+  async addTask(task: Pick<DailyTask, 'title' | 'category' | 'priority'>): Promise<DailyTask> {
+    const created = await apiRequest<TaskItem>('/api/tasks', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: task.title,
+        priority: task.priority,
+        category: task.category,
+        dueDate: new Date().toLocaleDateString('en-CA'), // YYYY-MM-DD, local
+      }),
+    });
+    return toDailyTask(created);
   },
 
-  /**
-   * Updates an envelope's allocated amount and recalculates burn rate
-   */
-  async updateBudgetEnvelope(
-    envelopeId: string,
-    allocatedAmount: number
-  ): Promise<BudgetEnvelope> {
-    const envelopeIndex = state.budgetEnvelopes.findIndex((e) => e.id === envelopeId);
-    if (envelopeIndex === -1) {
-      throw new Error(`Budget envelope with id "${envelopeId}" not found.`);
-    }
-
-    const current = state.budgetEnvelopes[envelopeIndex];
-    const spentAmount = current.spentAmount;
-    const burnPercentage = allocatedAmount > 0
-      ? Number(((spentAmount / allocatedAmount) * 100).toFixed(1))
-      : 100;
-    const bufferRemaining = Math.max(0, allocatedAmount - spentAmount);
-
-    let burnRateStatus: BudgetEnvelope['burnRateStatus'] = 'normal';
-    if (burnPercentage >= 100) {
-      burnRateStatus = 'exceeded';
-    } else if (burnPercentage >= 90) {
-      burnRateStatus = 'alert';
-    } else if (burnPercentage >= 75) {
-      burnRateStatus = 'contained';
-    }
-
-    const updatedEnvelope: BudgetEnvelope = {
-      ...current,
-      allocatedAmount,
-      burnPercentage,
-      bufferRemaining,
-      burnRateStatus,
-    };
-
-    state.budgetEnvelopes[envelopeIndex] = updatedEnvelope;
-    return JSON.parse(JSON.stringify(updatedEnvelope));
-  },
-
-  /**
-   * Resets in-memory state back to baseline fixtures (useful for testing)
-   */
-  async resetState(): Promise<void> {
-    state = JSON.parse(JSON.stringify(mockOverviewData));
+  /** Saves this month's budget per category (amount 0 clears it). */
+  async saveBudgets(budgets: { category: TransactionCategory; amount: number }[]): Promise<void> {
+    await apiRequest('/api/budgets', { method: 'PUT', body: JSON.stringify({ budgets }) });
   },
 };

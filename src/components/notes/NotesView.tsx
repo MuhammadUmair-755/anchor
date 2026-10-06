@@ -1,141 +1,333 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Box from "@mui/material/Box";
-import {
-  JournalEntry,
-  ConsistencyStats,
-  PinnedMaxim,
-} from "@/types/models";
-import NotesSubBar from "./NotesSubBar";
-import JournalArchiveColumn from "./JournalArchiveColumn";
-import EditorialSanctuary from "./EditorialSanctuary";
-import ContextualIntelligenceAside from "./ContextualIntelligenceAside";
-import MobileNotesView from "./MobileNotesView";
+import Button from "@mui/material/Button";
+import ButtonBase from "@mui/material/ButtonBase";
+import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import InputBase from "@mui/material/InputBase";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import Typography from "@mui/material/Typography";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+import { Note } from "@/types/models";
+import { notesService } from "@/services/notesService";
+import NoteEditor from "./NoteEditor";
 
-export interface NotesViewProps {
-  entries: JournalEntry[];
-  activeEntry: JournalEntry;
-  onSelectEntry: (id: string) => void;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  onUpdateInquiry?: (answer: string) => void;
-  onExportMarkdown: () => void;
-  onPinEntry: () => void;
-  onContinueWriting: () => void;
-  consistencyStats?: ConsistencyStats;
-  pinnedMaxim?: PinnedMaxim;
-  taxonomyTags?: string[];
+const UI_FONT = "var(--font-plus-jakarta-sans), sans-serif";
+const SERIF = "var(--font-newsreader), Georgia, serif";
+const BORDER = "1px solid rgba(17, 28, 46, 0.08)";
+
+function shortDate(iso: string) {
+  const d = new Date(iso);
+  return d.toDateString() === new Date().toDateString()
+    ? d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+    : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export default function NotesView({
-  entries,
-  activeEntry,
-  onSelectEntry,
-  searchQuery,
-  onSearchChange,
-  onUpdateInquiry,
-  onExportMarkdown,
-  onPinEntry,
-  onContinueWriting,
-  consistencyStats,
-  pinnedMaxim,
-  taxonomyTags,
-}: NotesViewProps) {
-  return (
-    <Box sx={{ width: "100%", minHeight: "100%" }}>
-      {/* 1. MOBILE VIEWPORT (<768px): Dedicated Single-Column Flow */}
-      <Box sx={{ display: { xs: "block", md: "none" } }}>
-        <MobileNotesView
-          entries={entries}
-          activeEntry={activeEntry}
-          onSelectEntry={onSelectEntry}
-          onContinueWriting={onContinueWriting}
-          onMoreActions={onExportMarkdown}
-        />
-      </Box>
+function errorText(err: unknown) {
+  return err instanceof Error ? err.message : "Something went wrong";
+}
 
-      {/* 2. TABLET & DESKTOP VIEWPORT (>=768px): 3-Column Editorial Sanctuary */}
+export default function NotesView() {
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  // Editor state. `editing` false = nothing open; `current` null while editing = unsaved new draft.
+  const [editing, setEditing] = useState(false);
+  const [current, setCurrent] = useState<Note | null>(null);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [toast, setToast] = useState<{ message: string; severity: "success" | "error" } | null>(null);
+
+  const dirty = editing && (title !== (current?.title ?? "") || body !== (current?.body ?? ""));
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      setNotes(await notesService.list());
+    } catch (err) {
+      setLoadError(errorText(err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  // Browser-level guard for tab close / reload with unsaved text.
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return notes;
+    return notes.filter((n) => n.title.toLowerCase().includes(q) || n.body.toLowerCase().includes(q));
+  }, [notes, search]);
+
+  const openEditor = (note: Note | null) => {
+    setCurrent(note);
+    setTitle(note?.title ?? "");
+    setBody(note?.body ?? "");
+    setEditing(true);
+  };
+
+  // Run `action` now, or after the user confirms discarding unsaved changes.
+  const guard = (action: () => void) => (dirty ? setPendingAction(() => action) : action());
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const input = { title: title.trim() || "Untitled", body };
+      const saved = current ? await notesService.update(current.id, input) : await notesService.create(input);
+      setNotes((prev) => [saved, ...prev.filter((n) => n.id !== saved.id)]);
+      openEditor(saved);
+    } catch (err) {
+      setToast({ message: errorText(err), severity: "error" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!current) return;
+    setConfirmDelete(false);
+    try {
+      await notesService.remove(current.id);
+      setNotes((prev) => prev.filter((n) => n.id !== current.id));
+      setEditing(false);
+      setCurrent(null);
+      setToast({ message: "Note deleted", severity: "success" });
+    } catch (err) {
+      setToast({ message: errorText(err), severity: "error" });
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
+        <CircularProgress size={32} sx={{ color: "#3F6853" }} />
+      </Box>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <Box sx={{ maxWidth: 560, mx: "auto", mt: 6 }}>
+        <Alert
+          severity="error"
+          action={<Button color="inherit" size="small" onClick={load}>Retry</Button>}
+          sx={{ borderRadius: 2 }}
+        >
+          Couldn&apos;t load notes: {loadError}
+        </Alert>
+      </Box>
+    );
+  }
+
+  const newNoteButton = (label: string) => (
+    <Button
+      variant="contained"
+      disableElevation
+      startIcon={<AddRoundedIcon />}
+      onClick={() => guard(() => openEditor(null))}
+      sx={{ textTransform: "none", fontFamily: UI_FONT, bgcolor: "#3F6853", "&:hover": { bgcolor: "#345845" } }}
+    >
+      {label}
+    </Button>
+  );
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        bgcolor: "#FCFBF8",
+        border: BORDER,
+        borderRadius: 3,
+        overflow: "hidden",
+        height: { md: "calc(100vh - 160px)" },
+        minHeight: { xs: "calc(100vh - 200px)", md: 480 },
+      }}
+    >
+      {/* List pane (hidden on mobile while editing) */}
       <Box
         sx={{
-          display: { xs: "none", md: "flex" },
+          display: { xs: editing ? "none" : "flex", md: "flex" },
           flexDirection: "column",
-          height: { md: "calc(100vh - 110px)", lg: "calc(100vh - 120px)" },
+          width: { xs: "100%", md: 320 },
+          flexShrink: 0,
+          borderRight: { md: BORDER },
         }}
       >
-        {/* Outer Card Enclosure */}
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, pb: 1.5 }}>
+          <Typography sx={{ fontFamily: SERIF, fontSize: "1.5rem", fontWeight: 500, color: "#0B1628" }}>
+            Notes
+          </Typography>
+          {newNoteButton("New note")}
+        </Box>
+
         <Box
           sx={{
-            bgcolor: "#FCFBF8",
-            border: "1px solid rgba(17, 28, 46, 0.08)",
-            borderRadius: 3,
-            overflow: "hidden",
+            mx: 2,
+            mb: 1.5,
+            px: 1.25,
             display: "flex",
-            flexDirection: "column",
-            height: "100%",
-            boxShadow: "0 1px 3px rgba(11, 22, 40, 0.02)",
+            alignItems: "center",
+            gap: 1,
+            border: BORDER,
+            borderRadius: 2,
+            bgcolor: "#F7F5EF",
           }}
         >
-          {/* Top Sub-Bar */}
-          <NotesSubBar
-            onFilterClick={() => {}}
-            onSettingsClick={() => {}}
+          <SearchRoundedIcon sx={{ fontSize: 18, color: "#68717C" }} />
+          <InputBase
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search notes"
+            inputProps={{ "aria-label": "Search notes" }}
+            sx={{ flex: 1, py: 0.75, fontFamily: UI_FONT, fontSize: "0.875rem" }}
           />
+        </Box>
 
-          {/* 3-Column Main Split */}
-          <Box
-            sx={{
-              display: "flex",
-              flex: 1,
-              minHeight: 0,
-              overflow: "hidden",
-            }}
-          >
-            {/* Column 1: Chronological Archive (320px) */}
-            <JournalArchiveColumn
-              entries={entries}
-              activeId={activeEntry.id}
-              onSelectEntry={onSelectEntry}
-              searchQuery={searchQuery}
-              onSearchChange={onSearchChange}
-            />
-
-            {/* Column 2: Editorial Sanctuary (Fluid flex-1, max-w-3xl) */}
-            <Box
-              sx={{
-                flex: 1,
-                minWidth: 0,
-                overflowY: "auto",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <EditorialSanctuary
-                entry={activeEntry}
-                onUpdateInquiry={onUpdateInquiry}
-              />
+        <Box sx={{ flex: 1, overflowY: "auto", borderTop: BORDER }}>
+          {notes.length === 0 ? (
+            <Box sx={{ textAlign: "center", px: 3, py: 6, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+              <Typography sx={{ fontFamily: UI_FONT, color: "#68717C", fontSize: "0.9375rem" }}>
+                No notes yet. Capture a thought, a plan, or anything worth keeping.
+              </Typography>
+              {newNoteButton("Write your first note")}
             </Box>
-
-            {/* Column 3: Contextual Intelligence Aside (320px, visible on lg+) */}
-            <Box
-              sx={{
-                display: { md: "none", lg: "flex" },
-                height: "100%",
-                overflow: "hidden",
-              }}
-            >
-              <ContextualIntelligenceAside
-                entry={activeEntry}
-                consistencyStats={consistencyStats}
-                pinnedMaxim={pinnedMaxim}
-                taxonomyTags={taxonomyTags}
-                onExportMarkdown={onExportMarkdown}
-                onPinEntry={onPinEntry}
-              />
-            </Box>
-          </Box>
+          ) : visible.length === 0 ? (
+            <Typography sx={{ fontFamily: UI_FONT, color: "#68717C", fontSize: "0.875rem", p: 3, textAlign: "center" }}>
+              No notes match &ldquo;{search}&rdquo;.
+            </Typography>
+          ) : (
+            visible.map((note) => {
+              const selected = editing && current?.id === note.id;
+              return (
+                <ButtonBase
+                  key={note.id}
+                  onClick={() => guard(() => openEditor(note))}
+                  sx={{
+                    display: "block",
+                    width: "100%",
+                    textAlign: "left",
+                    px: 2,
+                    py: 1.5,
+                    borderBottom: BORDER,
+                    bgcolor: selected ? "rgba(63, 104, 83, 0.10)" : "transparent",
+                    borderLeft: `3px solid ${selected ? "#3F6853" : "transparent"}`,
+                    "&:hover": { bgcolor: selected ? "rgba(63, 104, 83, 0.10)" : "rgba(17, 28, 46, 0.03)" },
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+                    <Typography noWrap sx={{ flex: 1, fontFamily: UI_FONT, fontWeight: 600, fontSize: "0.9375rem", color: "#17202B" }}>
+                      {note.title}
+                    </Typography>
+                    <Typography sx={{ fontFamily: UI_FONT, fontSize: "0.75rem", color: "#68717C", flexShrink: 0 }}>
+                      {shortDate(note.updatedAt)}
+                    </Typography>
+                  </Box>
+                  <Typography noWrap sx={{ fontFamily: UI_FONT, fontSize: "0.8125rem", color: "#68717C", mt: 0.25 }}>
+                    {note.body.trim() || "No content"}
+                  </Typography>
+                </ButtonBase>
+              );
+            })
+          )}
         </Box>
       </Box>
+
+      {/* Editor pane */}
+      <Box sx={{ display: { xs: editing ? "flex" : "none", md: "flex" }, flex: 1, minWidth: 0 }}>
+        {editing ? (
+          <NoteEditor
+            title={title}
+            body={body}
+            onTitleChange={setTitle}
+            onBodyChange={setBody}
+            dirty={dirty}
+            saving={saving}
+            canDelete={Boolean(current)}
+            onSave={handleSave}
+            onDelete={() => setConfirmDelete(true)}
+            onBack={() => guard(() => setEditing(false))}
+          />
+        ) : (
+          <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", p: 4 }}>
+            <Typography sx={{ fontFamily: UI_FONT, color: "#68717C", fontSize: "0.9375rem" }}>
+              {notes.length ? "Select a note to read or edit it." : "Your notes will appear here."}
+            </Typography>
+          </Box>
+        )}
+      </Box>
+
+      {/* Discard unsaved changes? */}
+      <Dialog open={pendingAction !== null} onClose={() => setPendingAction(null)}>
+        <DialogTitle sx={{ fontFamily: UI_FONT, fontWeight: 600 }}>Discard unsaved changes?</DialogTitle>
+        <DialogContent sx={{ fontFamily: UI_FONT, color: "#68717C" }}>
+          Your edits to this note haven&apos;t been saved.
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPendingAction(null)} sx={{ textTransform: "none", color: "#68717C" }}>
+            Keep editing
+          </Button>
+          <Button
+            onClick={() => {
+              pendingAction?.();
+              setPendingAction(null);
+            }}
+            sx={{ textTransform: "none", color: "#8C3F3B" }}
+          >
+            Discard
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete confirmation */}
+      <Dialog open={confirmDelete} onClose={() => setConfirmDelete(false)}>
+        <DialogTitle sx={{ fontFamily: UI_FONT, fontWeight: 600 }}>Delete this note?</DialogTitle>
+        <DialogContent sx={{ fontFamily: UI_FONT, color: "#68717C" }}>
+          &ldquo;{current?.title}&rdquo; will be permanently deleted.
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDelete(false)} sx={{ textTransform: "none", color: "#68717C" }}>
+            Cancel
+          </Button>
+          <Button onClick={handleDelete} sx={{ textTransform: "none", color: "#8C3F3B" }}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={toast !== null}
+        autoHideDuration={4000}
+        onClose={() => setToast(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert severity={toast?.severity ?? "success"} onClose={() => setToast(null)} sx={{ borderRadius: 2 }}>
+          {toast?.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

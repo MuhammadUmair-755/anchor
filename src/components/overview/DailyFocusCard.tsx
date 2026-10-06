@@ -25,60 +25,7 @@ export default function DailyFocusCard({
   onToggleTask,
   onAddNewTask,
 }: DailyFocusCardProps) {
-  const defaultTasks: DailyTask[] = [
-    {
-      id: "task-1",
-      title: "Complete API integration",
-      category: "work",
-      categoryLabel: "Work · High",
-      priority: "high",
-      isCompleted: true,
-      dueInfo: "Completed 08:30 AM",
-      createdAt: "2026-10-01T07:00:00Z",
-    },
-    {
-      id: "task-2",
-      title: "Morning gym session",
-      category: "personal",
-      categoryLabel: "Personal · Health",
-      priority: "high",
-      isCompleted: true,
-      dueInfo: "Completed 09:15 AM",
-      createdAt: "2026-10-01T07:15:00Z",
-    },
-    {
-      id: "task-3",
-      title: "Review monthly investment yield",
-      category: "finance",
-      categoryLabel: "Finance · Portfolio",
-      priority: "high",
-      isCompleted: true,
-      dueInfo: "Completed 10:00 AM",
-      createdAt: "2026-10-01T07:30:00Z",
-    },
-    {
-      id: "task-4",
-      title: "Study TypeScript 5.5 performance notes",
-      category: "learning",
-      categoryLabel: "Learning · Medium",
-      priority: "medium",
-      isCompleted: false,
-      dueInfo: "Due 4:00 PM",
-      createdAt: "2026-10-01T08:00:00Z",
-    },
-    {
-      id: "task-5",
-      title: "Weekly financial reconciliation",
-      category: "finance",
-      categoryLabel: "Finance · Due 6:00 PM",
-      priority: "high",
-      isCompleted: false,
-      dueInfo: "Due 6:00 PM",
-      createdAt: "2026-10-01T08:00:00Z",
-    },
-  ];
-
-  const currentTasks = tasks && tasks.length > 0 ? tasks : defaultTasks;
+  const currentTasks = tasks ?? [];
   const completedCount = currentTasks.filter((t) => t.isCompleted).length;
   const totalCount = currentTasks.length;
   const progressPercent = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
@@ -162,6 +109,11 @@ export default function DailyFocusCard({
 
         {/* Interactive Checklist */}
         <Stack spacing={1}>
+          {currentTasks.length === 0 && (
+            <Typography sx={{ fontSize: "0.8125rem", color: "#68717C", py: 3, textAlign: "center" }}>
+              Nothing due today.
+            </Typography>
+          )}
           {currentTasks.map((task) => (
             <Box
               key={task.id}
