@@ -6,11 +6,9 @@ import { usePathname } from "next/navigation";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Avatar from "@mui/material/Avatar";
-import AddIcon from "@mui/icons-material/Add";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -23,7 +21,6 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 interface DesktopSidebarProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
-  onOpenQuickEntry: () => void;
 }
 
 interface NavItem {
@@ -48,7 +45,6 @@ const NAV_ITEMS: NavItem[] = [
     label: "Tasks",
     href: "/tasks",
     icon: <CheckCircleOutlineIcon sx={{ fontSize: 20 }} />,
-    badge: "5",
   },
   {
     label: "Notes",
@@ -65,7 +61,6 @@ const NAV_ITEMS: NavItem[] = [
 export default function DesktopSidebar({
   collapsed,
   onToggleCollapse,
-  onOpenQuickEntry,
 }: DesktopSidebarProps) {
   const pathname = usePathname();
   const {
@@ -162,49 +157,6 @@ export default function DesktopSidebar({
               Command Center
             </Typography>
           </Box>
-        )}
-      </Box>
-
-      {/* Primary Action Button (+ Quick Entry) */}
-      <Box sx={{ p: collapsed ? 1.5 : 2 }}>
-        {collapsed ? (
-          <Tooltip title="Quick Entry (+)" placement="right">
-            <IconButton
-              onClick={onOpenQuickEntry}
-              sx={{
-                width: 44,
-                height: 44,
-                bgcolor: "#0B1628",
-                color: "#FCFBF8",
-                borderRadius: 2,
-                "&:hover": { bgcolor: "#162338" },
-                boxShadow: "0 2px 6px rgba(11, 22, 40, 0.18)",
-              }}
-            >
-              <AddIcon />
-            </IconButton>
-          </Tooltip>
-        ) : (
-          <Button
-            fullWidth
-            variant="contained"
-            onClick={onOpenQuickEntry}
-            startIcon={<AddIcon />}
-            sx={{
-              py: 1.25,
-              bgcolor: "#0B1628",
-              color: "#FCFBF8",
-              borderRadius: 2,
-              fontWeight: 600,
-              fontSize: "0.875rem",
-              boxShadow: "0 2px 6px rgba(11, 22, 40, 0.18)",
-              "&:hover": {
-                bgcolor: "#162338",
-              },
-            }}
-          >
-            Quick Entry
-          </Button>
         )}
       </Box>
 

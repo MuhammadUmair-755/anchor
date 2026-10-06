@@ -6,34 +6,33 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DownloadIcon from "@mui/icons-material/Download";
-import AddCircleIcon from "@mui/icons-material/AddCircle";
+import AddIcon from "@mui/icons-material/Add";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import { currentMonthKey, monthLabel, shiftMonth } from "@/lib/calendar";
 
 interface FinanceHeaderProps {
   selectedMonth: string;
   onMonthChange: (month: string) => void;
   onExportCsv: () => void;
-  onOpenAddTransaction: () => void;
+  onAddTransaction: () => void;
 }
 
 export default function FinanceHeader({
   selectedMonth,
   onMonthChange,
   onExportCsv,
-  onOpenAddTransaction,
+  onAddTransaction,
 }: FinanceHeaderProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
 
-  const months = [
-    { value: "2026-10", label: "October 2026" },
-    { value: "2026-09", label: "September 2026" },
-    { value: "2026-08", label: "August 2026" },
-    { value: "2026-07", label: "July 2026" },
-    { value: "2026-06", label: "June 2026" },
-  ];
+  // The last 12 months, newest first, from today's real date
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const value = shiftMonth(currentMonthKey(), -i);
+    return { value, label: monthLabel(value) };
+  });
 
   const currentLabel =
     months.find((m) => m.value === selectedMonth)?.label || selectedMonth;
@@ -79,7 +78,7 @@ export default function FinanceHeader({
               color: "#40617E",
             }}
           >
-            Q3 Fiscal Cycle
+            {currentLabel}
           </Typography>
         </Box>
 
@@ -204,11 +203,10 @@ export default function FinanceHeader({
           Export Ledger (CSV)
         </Button>
 
-        {/* Add Transaction Button */}
         <Button
           variant="contained"
-          onClick={onOpenAddTransaction}
-          startIcon={<AddCircleIcon sx={{ fontSize: 18 }} />}
+          onClick={onAddTransaction}
+          startIcon={<AddIcon sx={{ fontSize: 18 }} />}
           sx={{
             bgcolor: "#111C2E",
             color: "#FFFFFF",
@@ -219,12 +217,10 @@ export default function FinanceHeader({
             py: 1,
             textTransform: "none",
             boxShadow: "0 2px 4px rgba(17,28,46,0.15)",
-            "&:hover": {
-              bgcolor: "#000000",
-            },
+            "&:hover": { bgcolor: "#000000" },
           }}
         >
-          + Add Transaction
+          Add Transaction
         </Button>
       </Box>
     </Box>

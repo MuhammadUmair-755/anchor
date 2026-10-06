@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth/getAuthUser";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { localISODate } from "../tasks/shared";
 import { ExecutiveOverviewData, OutflowSector, BudgetEnvelope, DailyTask, TodayDebitItem } from "@/types/models";
 
 export const dynamic = "force-dynamic";
@@ -39,26 +40,21 @@ export async function GET() {
     const supabase = createAdminClient();
     const userId = authUser.userId;
 
-    // Fetch accounts, transactions, budget envelopes, tasks, goals in parallel
+    // Fetch balance, transactions, budget envelopes and tasks in parallel
     const [
-      { data: accounts },
+      { data: profile },
       { data: transactions },
       { data: envelopes },
       { data: tasks },
-      { data: goals },
-      { data: maxims },
     ] = await Promise.all([
-      supabase.from("accounts").select("*").eq("user_id", userId),
+      supabase.from("profiles").select("balance").eq("id", userId).maybeSingle(),
       supabase.from("transactions").select("*").eq("user_id", userId).order("date", { ascending: false }),
       supabase.from("budget_envelopes").select("*").eq("user_id", userId),
       supabase.from("tasks").select("*").eq("user_id", userId).order("created_at", { ascending: true }),
-      supabase.from("sovereign_goals").select("*").eq("user_id", userId).limit(1),
-      supabase.from("pinned_maxims").select("*").eq("user_id", userId).eq("is_active", true).limit(1),
     ]);
 
-    // 1. Calculate Liquidity
-    const liquidAccounts = (accounts || []).filter((a) => a.type !== "credit");
-    const totalLiquidity = liquidAccounts.reduce((sum, a) => sum + Number(a.balance), 0);
+    // 1. Liquidity = the user's single balance
+    const totalLiquidity = Number(profile?.balance ?? 0);
 
     // 2. Inflows and Expenses (Outflows)
     const todayStr = new Date().toISOString().split("T")[0];
@@ -105,7 +101,16 @@ export async function GET() {
     });
 
     // 4. Budget Envelopes
-    const budgetEnvelopes: BudgetEnvelope[] = (envelopes || []).map((env) => {
+    // A budget carries forward month to month: per category use the latest cycle up to this month.
+    const latestByCategory = new Map<string, NonNullable<typeof envelopes>[number]>();
+    for (const env of envelopes || []) {
+      if (env.cycle > currentMonthStr) continue;
+      const prev = latestByCategory.get(env.category);
+      if (!prev || env.cycle > prev.cycle) latestByCategory.set(env.category, env);
+    }
+    const activeEnvelopes = [...latestByCategory.values()].filter((env) => Number(env.allocated_amount) > 0);
+
+    const budgetEnvelopes: BudgetEnvelope[] = activeEnvelopes.map((env) => {
       const spent = categoryExpensesMap[env.category] || 0;
       const allocated = Number(env.allocated_amount);
       const burnPct = allocated > 0 ? Math.round((spent / allocated) * 100) : 0;
@@ -133,8 +138,10 @@ export async function GET() {
     const totalSpent = budgetEnvelopes.reduce((acc, e) => acc + e.spentAmount, 0);
 
     // 5. Daily Tasks
+    const localDay = localISODate();
     const dailyTasks: DailyTask[] = (tasks || [])
-      .filter((t) => t.tab_category === "today" || t.due_date === todayStr)
+      // Due today, plus anything overdue that is still open
+      .filter((t) => !!t.due_date && (t.due_date === localDay || (t.due_date < localDay && !t.is_completed)))
       .map((t) => ({
         id: t.id,
         title: t.title,
@@ -161,10 +168,6 @@ export async function GET() {
         icon: "ReceiptOutlined",
       }));
 
-    // 7. Mindset Goal
-    const primaryGoal = goals?.[0];
-    const maxim = maxims?.[0];
-
     const overviewData: ExecutiveOverviewData = {
       greeting: "Welcome back,",
       userName: authUser.fullName,
@@ -176,11 +179,9 @@ export async function GET() {
         year: "numeric",
       }),
       totalLiquidity,
-      liquidityTrendPercent: 8.4,
       currency: "INR",
       monthlyInflow,
-      monthlyInflowTrendPercent: 12.5,
-      inflowSourcesCount: (transactions || []).filter((tx) => Number(tx.amount) > 0).length,
+      inflowSourcesCount: (transactions || []).filter((tx) => Number(tx.amount) > 0 && (tx.date || "").startsWith(currentMonthStr)).length,
       totalExpenses,
       expensesBurnRatePercent: monthlyInflow > 0 ? Math.round((totalExpenses / monthlyInflow) * 100) : 0,
       netRetained,
@@ -191,16 +192,6 @@ export async function GET() {
       budgetEnvelopes,
       dailyTasks,
       todayDebits,
-      mindsetGoal: {
-        quote: maxim?.quote || "Restraint is power. When life gets chaotic, tighten the system.",
-        quoteAuthor: maxim?.attribution || "Anchor Codex",
-        entryTime: "08:00 AM",
-        goalTitle: primaryGoal?.title || "Liquid Sovereign Reserve",
-        targetAmount: 3000000,
-        currentAmount: totalLiquidity,
-        achievedPercentage: primaryGoal?.progress_percentage || 82,
-        targetDate: primaryGoal?.target_date || "Dec 31, 2026",
-      },
     };
 
     return NextResponse.json(overviewData);

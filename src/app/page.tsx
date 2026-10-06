@@ -11,40 +11,27 @@ import Typography from "@mui/material/Typography";
 import {
   ExecutiveOverviewData,
   DailyTask,
-  BudgetEnvelope,
-  Transaction,
-  TodayDebitItem,
 } from "@/types/models";
 import { overviewService } from "@/services/overviewService";
 import {
-  FilterStrip,
   LiquidityHero,
   OutflowDonutChart,
   BudgetHealth,
   DailyFocusCard,
   TodayDebitsCard,
-  MindsetGoalCard,
   AdjustAllocationsModal,
   AddTaskModal,
 } from "@/components/overview";
-import QuickEntryModal from "@/components/layout/QuickEntryModal";
 
 export default function OverviewPage() {
   const [data, setData] = useState<ExecutiveOverviewData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filter strip state
-  const [selectedMonth, setSelectedMonth] = useState<string>("2026-09");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [selectedAccount, setSelectedAccount] = useState<string>("all");
-  const [selectedType, setSelectedType] = useState<string>("all");
-  const [temporalRange, setTemporalRange] = useState<"today" | "week" | "month" | "quarter">("month");
 
   // Interactive Modals
   const [adjustAllocationsOpen, setAdjustAllocationsOpen] = useState<boolean>(false);
   const [addTaskOpen, setAddTaskOpen] = useState<boolean>(false);
-  const [quickEntryOpen, setQuickEntryOpen] = useState<boolean>(false);
 
   // Feedback Notification
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "info" }>({
@@ -79,9 +66,10 @@ export default function OverviewPage() {
 
   // Task Toggle Handler
   const handleToggleTask = async (taskId: string) => {
-    if (!data) return;
+    const current = data?.dailyTasks.find((t) => t.id === taskId);
+    if (!current) return;
     try {
-      const updatedTask = await overviewService.toggleTask(taskId);
+      const updatedTask = await overviewService.setTaskCompleted(taskId, !current.isCompleted);
       setData((prev) => {
         if (!prev) return prev;
         return {
@@ -115,52 +103,14 @@ export default function OverviewPage() {
     });
   };
 
-  // Budget Allocations Updated Handler
-  const handleAllocationsUpdated = (updatedEnvelopes: BudgetEnvelope[]) => {
-    setData((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        budgetEnvelopes: updatedEnvelopes,
-      };
-    });
-    setSnackbar({
-      open: true,
-      message: "Budget envelope allocations successfully updated.",
-      severity: "success",
-    });
-  };
-
-  // Quick Entry Success Handler
-  const handleQuickEntrySuccess = (transaction: Transaction) => {
-    // If it's an outflow debit, add it to today's debits card in state
-    if (transaction.flowType === "outflow" || transaction.amount < 0) {
-      const newDebit: TodayDebitItem = {
-        id: `debit-${Date.now()}`,
-        title: transaction.payeeOrPayer,
-        category: transaction.categoryLabel,
-        paymentMethod: transaction.accountName,
-        amount: Math.abs(transaction.amount),
-        currency: transaction.currency,
-        time: transaction.time || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        icon: "receipt_long",
-      };
-
-      setData((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          todayDebits: [newDebit, ...prev.todayDebits],
-          totalSpent: prev.totalSpent + Math.abs(transaction.amount),
-        };
-      });
+  // Budgets saved: reload so spent/remaining figures come from the server
+  const handleBudgetsSaved = async () => {
+    try {
+      setData(await overviewService.getOverviewData());
+      setSnackbar({ open: true, message: "Budgets updated.", severity: "success" });
+    } catch {
+      // keep current data; the modal already reported the save
     }
-
-    setSnackbar({
-      open: true,
-      message: `Transaction recorded: ${transaction.payeeOrPayer} (${transaction.amount > 0 ? "+" : ""}Rs. ${Math.abs(transaction.amount).toLocaleString("en-IN")})`,
-      severity: "success",
-    });
   };
 
   if (loading) {
@@ -210,26 +160,11 @@ export default function OverviewPage() {
         gap: { xs: 2, sm: 2.5, md: 3.5 },
       }}
     >
-      {/* 1. PERSISTENT FILTER STRIP */}
-      <FilterStrip
-        selectedMonth={selectedMonth}
-        onMonthChange={setSelectedMonth}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-        selectedAccount={selectedAccount}
-        onAccountChange={setSelectedAccount}
-        selectedType={selectedType}
-        onTypeChange={setSelectedType}
-        temporalRange={temporalRange}
-        onTemporalRangeChange={setTemporalRange}
-      />
 
       {/* 2. PRIMARY FINANCIAL ANCHOR HERO SECTION (Asymmetric Ledger) */}
       <LiquidityHero
         totalLiquidity={data.totalLiquidity}
-        liquidityTrendPercent={data.liquidityTrendPercent}
         monthlyInflow={data.monthlyInflow}
-        monthlyInflowTrendPercent={data.monthlyInflowTrendPercent}
         inflowSourcesCount={data.inflowSourcesCount}
         totalExpenses={data.totalExpenses}
         expensesBurnRatePercent={data.expensesBurnRatePercent}
@@ -257,10 +192,10 @@ export default function OverviewPage() {
         </Grid>
       </Grid>
 
-      {/* 4. BOTTOM OPERATIONAL TRIO (Daily Focus, Today's Debits, Mindset & Goal) */}
+      {/* 4. BOTTOM ROW (Daily Focus, Today's Debits) */}
       <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ alignItems: "stretch" }}>
         {/* Card A: Today's Focus */}
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <DailyFocusCard
             tasks={data.dailyTasks}
             onToggleTask={handleToggleTask}
@@ -269,16 +204,8 @@ export default function OverviewPage() {
         </Grid>
 
         {/* Card B: Today's Itemized Spending */}
-        <Grid size={{ xs: 12, md: 4 }}>
-          <TodayDebitsCard
-            debits={data.todayDebits}
-            onLogExpense={() => setQuickEntryOpen(true)}
-          />
-        </Grid>
-
-        {/* Card C: Today's Journal & Goal Anchor */}
-        <Grid size={{ xs: 12, md: 4 }}>
-          <MindsetGoalCard mindsetGoal={data.mindsetGoal} />
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TodayDebitsCard debits={data.todayDebits} />
         </Grid>
       </Grid>
 
@@ -288,7 +215,8 @@ export default function OverviewPage() {
         open={adjustAllocationsOpen}
         onClose={() => setAdjustAllocationsOpen(false)}
         envelopes={data.budgetEnvelopes}
-        onAllocationsUpdated={handleAllocationsUpdated}
+        sectors={data.outflowSectors}
+        onSaved={handleBudgetsSaved}
       />
 
       {/* 2. Add New Task Dialog */}
@@ -296,14 +224,6 @@ export default function OverviewPage() {
         open={addTaskOpen}
         onClose={() => setAddTaskOpen(false)}
         onTaskAdded={handleTaskAdded}
-      />
-
-      {/* 3. Quick Entry Dialog (from + Log Expense) */}
-      <QuickEntryModal
-        open={quickEntryOpen}
-        onClose={() => setQuickEntryOpen(false)}
-        onSuccess={handleQuickEntrySuccess}
-        initialIntent="spent"
       />
 
       {/* Subtle Toast Feedback */}

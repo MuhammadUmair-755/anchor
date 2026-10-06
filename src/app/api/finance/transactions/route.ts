@@ -31,7 +31,6 @@ export async function GET(req: Request) {
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const pageSize = Math.max(1, parseInt(searchParams.get("pageSize") || "10", 10));
     const category = searchParams.get("category");
-    const accountId = searchParams.get("accountId");
     const flowType = searchParams.get("flowType");
     const selectedMonth = searchParams.get("selectedMonth");
     const searchQuery = searchParams.get("searchQuery");
@@ -39,17 +38,14 @@ export async function GET(req: Request) {
 
     const supabase = createAdminClient();
 
-    // Query transactions with joined accounts
+    // Query transactions directly for user
     let query = supabase
       .from("transactions")
-      .select("*, accounts!transactions_account_id_fkey(name)", { count: "exact" })
+      .select("*", { count: "exact" })
       .eq("user_id", authUser.userId);
 
     if (category && category !== "all") {
       query = query.eq("category", category as Transaction['category']);
-    }
-    if (accountId && accountId !== "all") {
-      query = query.eq("account_id", accountId);
     }
     if (flowType && flowType !== "all") {
       query = query.eq("flow_type", flowType as Transaction['flowType']);
@@ -105,11 +101,8 @@ export async function GET(req: Request) {
       if (amt > 0) totalInflow += amt;
       else totalOutflow += Math.abs(amt);
 
-      const joinedAccount = tx.accounts as { name?: string } | null;
       return {
         id: tx.id,
-        accountId: tx.account_id,
-        accountName: joinedAccount?.name || "Account",
         amount: amt,
         currency: tx.currency as Transaction['currency'],
         flowType: tx.flow_type as Transaction['flowType'],
@@ -148,7 +141,7 @@ export async function GET(req: Request) {
 
 /**
  * POST /api/finance/transactions
- * Creates transaction and adjusts account balance atomically.
+ * Creates a transaction and applies it to the user's single balance.
  */
 export async function POST(req: Request) {
   try {
@@ -159,7 +152,6 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const {
-      accountId,
       amount,
       currency = "INR",
       flowType = "outflow",
@@ -171,17 +163,19 @@ export async function POST(req: Request) {
       paymentMethod = "card",
       status = "cleared",
       isRecurring = false,
-      destinationAccountId,
     } = body;
 
-    if (!accountId || amount === undefined || !payeeOrPayer) {
+    const rawAmount = Number(amount);
+    if (!Number.isFinite(rawAmount) || rawAmount <= 0 || !payeeOrPayer) {
       return NextResponse.json(
-        { error: "accountId, amount, and payeeOrPayer are required" },
+        { error: "A positive amount and payeeOrPayer are required" },
         { status: 400 }
       );
     }
+    if (flowType !== "inflow" && flowType !== "outflow") {
+      return NextResponse.json({ error: "flowType must be inflow or outflow" }, { status: 400 });
+    }
 
-    const rawAmount = Number(amount);
     // Outflow must be negative, inflow positive
     const signedAmount = flowType === "inflow" ? Math.abs(rawAmount) : -Math.abs(rawAmount);
 
@@ -192,8 +186,6 @@ export async function POST(req: Request) {
       .from("transactions")
       .insert({
         user_id: authUser.userId,
-        account_id: accountId,
-        destination_account_id: destinationAccountId || null,
         amount: signedAmount,
         currency,
         flow_type: flowType,
@@ -206,57 +198,25 @@ export async function POST(req: Request) {
         status,
         is_recurring: Boolean(isRecurring),
       })
-      .select("*, accounts!transactions_account_id_fkey(name)")
+      .select("*")
       .single();
 
     if (txError) {
       return NextResponse.json({ error: txError.message }, { status: 500 });
     }
 
-    // 2. Adjust account balance
-    const { data: srcAccount } = await supabase
-      .from("accounts")
-      .select("balance")
-      .eq("id", accountId)
-      .single();
-
-    if (srcAccount) {
-      const newBalance = Number(srcAccount.balance) + signedAmount;
-      await supabase
-        .from("accounts")
-        .update({
-          balance: newBalance,
-          updated_at: new Date().toISOString(),
-          last_reconciled_at: new Date().toISOString(),
-        })
-        .eq("id", accountId);
+    // 2. Apply to the single balance (atomic increment in Postgres)
+    const { error: balanceError } = await supabase.rpc("adjust_balance", {
+      p_user_id: authUser.userId,
+      p_delta: signedAmount,
+    });
+    if (balanceError) {
+      await supabase.from("transactions").delete().eq("id", newTx.id);
+      return NextResponse.json({ error: balanceError.message }, { status: 500 });
     }
 
-    // If transfer to destination account
-    if (flowType === "transfer" && destinationAccountId) {
-      const { data: dstAccount } = await supabase
-        .from("accounts")
-        .select("balance")
-        .eq("id", destinationAccountId)
-        .single();
-
-      if (dstAccount) {
-        const newDstBalance = Number(dstAccount.balance) + Math.abs(rawAmount);
-        await supabase
-          .from("accounts")
-          .update({
-            balance: newDstBalance,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", destinationAccountId);
-      }
-    }
-
-    const joinedNewAccount = newTx.accounts as { name?: string } | null;
     const mappedTx: Transaction = {
       id: newTx.id,
-      accountId: newTx.account_id,
-      accountName: joinedNewAccount?.name || "Account",
       amount: Number(newTx.amount),
       currency: newTx.currency as Transaction['currency'],
       flowType: newTx.flow_type as Transaction['flowType'],

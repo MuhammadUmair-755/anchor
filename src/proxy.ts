@@ -4,7 +4,6 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/auth/dev-session(.*)",
-  "/api/seed(.*)",
 ]);
 
 const isApiRoute = createRouteMatcher(["/api(.*)"]);

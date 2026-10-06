@@ -5,51 +5,28 @@ import { useRouter, usePathname } from "next/navigation";
 import Box from "@mui/material/Box";
 import BottomNavigation from "@mui/material/BottomNavigation";
 import BottomNavigationAction from "@mui/material/BottomNavigationAction";
-import Fab from "@mui/material/Fab";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
+import EditNoteIcon from "@mui/icons-material/EditNote";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import AddIcon from "@mui/icons-material/Add";
 
-interface MobileBottomNavProps {
-  onOpenQuickEntry: () => void;
-}
+const TABS = [
+  { label: "Overview", href: "/", icon: <DashboardIcon sx={{ fontSize: 20 }} /> },
+  { label: "Finance", href: "/finance", icon: <AccountBalanceWalletIcon sx={{ fontSize: 20 }} /> },
+  { label: "Tasks", href: "/tasks", icon: <CheckCircleOutlineIcon sx={{ fontSize: 20 }} /> },
+  { label: "Notes", href: "/notes", icon: <EditNoteIcon sx={{ fontSize: 20 }} /> },
+  { label: "Calendar", href: "/calendar", icon: <CalendarMonthIcon sx={{ fontSize: 20 }} /> },
+];
 
-export default function MobileBottomNav({ onOpenQuickEntry }: MobileBottomNavProps) {
+export default function MobileBottomNav() {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() || "/";
 
-  const getActiveTab = () => {
-    if (!pathname) return 0;
-    if (pathname === "/") return 0;
-    if (pathname.startsWith("/finance")) return 1;
-    if (pathname.startsWith("/tasks")) return 3;
-    if (pathname.startsWith("/calendar")) return 4;
-    return 0;
-  };
-
-  const handleNavChange = (_event: React.SyntheticEvent, newValue: number) => {
-    switch (newValue) {
-      case 0:
-        router.push("/");
-        break;
-      case 1:
-        router.push("/finance");
-        break;
-      case 2:
-        // Center item handled by FAB
-        break;
-      case 3:
-        router.push("/tasks");
-        break;
-      case 4:
-        router.push("/calendar");
-        break;
-      default:
-        break;
-    }
-  };
+  const activeIndex = Math.max(
+    0,
+    TABS.findIndex((t) => (t.href === "/" ? pathname === "/" : pathname.startsWith(t.href)))
+  );
 
   return (
     <Box
@@ -67,12 +44,11 @@ export default function MobileBottomNav({ onOpenQuickEntry }: MobileBottomNavPro
     >
       <BottomNavigation
         showLabels
-        value={getActiveTab()}
-        onChange={handleNavChange}
+        value={activeIndex}
+        onChange={(_e, i: number) => router.push(TABS[i].href)}
         sx={{
           height: 64,
           bgcolor: "#FCFBF8",
-          position: "relative",
           "& .MuiBottomNavigationAction-root": {
             minWidth: "auto",
             px: 1,
@@ -91,63 +67,10 @@ export default function MobileBottomNav({ onOpenQuickEntry }: MobileBottomNavPro
           },
         }}
       >
-        <BottomNavigationAction
-          label="Overview"
-          icon={<DashboardIcon sx={{ fontSize: 20 }} />}
-        />
-        <BottomNavigationAction
-          label="Finance"
-          icon={<AccountBalanceWalletIcon sx={{ fontSize: 20 }} />}
-        />
-
-        {/* Center Dummy Action for FAB Spacer */}
-        <BottomNavigationAction
-          disabled
-          sx={{
-            cursor: "default",
-            opacity: 0,
-            pointerEvents: "none",
-            width: 56,
-          }}
-        />
-
-        <BottomNavigationAction
-          label="Tasks"
-          icon={<CheckCircleOutlineIcon sx={{ fontSize: 20 }} />}
-        />
-        <BottomNavigationAction
-          label="Calendar"
-          icon={<CalendarMonthIcon sx={{ fontSize: 20 }} />}
-        />
+        {TABS.map((t) => (
+          <BottomNavigationAction key={t.href} label={t.label} icon={t.icon} />
+        ))}
       </BottomNavigation>
-
-      {/* Elevated Floating Quick Entry FAB */}
-      <Box
-        sx={{
-          position: "absolute",
-          top: -20,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 1300,
-        }}
-      >
-        <Fab
-          onClick={onOpenQuickEntry}
-          aria-label="Quick Entry"
-          sx={{
-            width: 48,
-            height: 48,
-            bgcolor: "#0B1628",
-            color: "#FCFBF8",
-            boxShadow: "0 4px 12px rgba(11, 22, 40, 0.3)",
-            "&:hover": {
-              bgcolor: "#162338",
-            },
-          }}
-        >
-          <AddIcon sx={{ fontSize: 24 }} />
-        </Fab>
-      </Box>
     </Box>
   );
 }

@@ -26,3 +26,20 @@ export async function apiFetch<T>(endpoint: string, options?: RequestInit): Prom
     return null;
   }
 }
+
+/**
+ * Strict variant for writes and pages that must show real data: throws with the
+ * server's error message instead of returning null, so failures are never hidden
+ * behind mock fallbacks.
+ */
+export async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(endpoint, {
+    ...options,
+    headers: { "Content-Type": "application/json", ...options?.headers },
+  });
+  const body = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error((body && (body.error || body.message)) || `Request failed (${res.status})`);
+  }
+  return body as T;
+}

@@ -7,26 +7,24 @@ import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
 import {
-  Account,
   Transaction,
   CashflowVelocity,
   RecurringObligation,
   TransactionFilterCriteria,
-  QuickEntryPayload,
 } from "@/types/models";
 import { financeService } from "@/services/financeService";
+import { currentMonthKey } from "@/lib/calendar";
 import {
   FinanceHeader,
-  AccountsRibbon,
+  BalanceCard,
+  AddTransactionModal,
   LedgerSection,
-  QuickEntryDock,
   CashflowVelocityCard,
   RecurringObligationsCard,
-  AddTransactionModal,
 } from "@/components/finance";
 
 export default function FinancePage() {
-  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [balance, setBalance] = useState<number>(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(1);
@@ -39,18 +37,14 @@ export default function FinancePage() {
 
   // Filter & Pagination State
   const [filterCriteria, setFilterCriteria] = useState<TransactionFilterCriteria>({
-    selectedMonth: "2026-10",
+    selectedMonth: currentMonthKey(),
     category: "all",
-    accountId: "all",
     flowType: "all",
     searchQuery: "",
     sortBy: "date_desc",
     page: 1,
     pageSize: 8,
   });
-
-  // Modal State
-  const [addTransactionOpen, setAddTransactionOpen] = useState<boolean>(false);
 
   // Snackbar Notification State
   const [snackbar, setSnackbar] = useState<{
@@ -66,14 +60,14 @@ export default function FinancePage() {
   // Load Transactions & Auxiliary Finance Data
   const loadFinanceData = useCallback(async () => {
     try {
-      const [accs, txResponse, vel, recs] = await Promise.all([
-        financeService.getAccounts(),
+      const [bal, txResponse, vel, recs] = await Promise.all([
+        financeService.getBalance(),
         financeService.getTransactions(filterCriteria),
         financeService.getCashflowVelocity(),
         financeService.getRecurringObligations(),
       ]);
 
-      setAccounts(accs);
+      setBalance(bal);
       setTransactions(txResponse.transactions);
       setTotalCount(txResponse.totalCount);
       setTotalPages(txResponse.totalPages);
@@ -94,6 +88,17 @@ export default function FinancePage() {
     loadFinanceData();
   }, [loadFinanceData]);
 
+  const [addTransactionOpen, setAddTransactionOpen] = useState<boolean>(false);
+
+  const handleTransactionSaved = (tx: Transaction) => {
+    setSnackbar({
+      open: true,
+      message: `Saved: ${tx.payeeOrPayer} (${tx.amount > 0 ? "+" : "-"}Rs. ${Math.abs(tx.amount).toLocaleString("en-IN")})`,
+      severity: "success",
+    });
+    loadFinanceData();
+  };
+
   // Handle Criteria Change
   const handleFilterChange = (newCriteria: Partial<TransactionFilterCriteria>) => {
     setFilterCriteria((prev) => ({
@@ -109,27 +114,6 @@ export default function FinancePage() {
       selectedMonth: month,
       page: 1,
     }));
-  };
-
-  // Handle Quick Entry & Transaction Creation
-  const handleCreateTransaction = async (payload: QuickEntryPayload) => {
-    try {
-      const newTx = await financeService.recordTransaction(payload);
-      setSnackbar({
-        open: true,
-        message: `Transaction recorded: "${newTx.payeeOrPayer}" (Rs. ${Math.abs(newTx.amount).toLocaleString()})`,
-        severity: "success",
-      });
-      // Refresh ledger & accounts
-      await loadFinanceData();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to record transaction";
-      setSnackbar({
-        open: true,
-        message: msg,
-        severity: "error",
-      });
-    }
   };
 
   // Export CSV Handler
@@ -161,8 +145,20 @@ export default function FinancePage() {
     }
   };
 
-  // Calculate Total Net Capital across accounts
-  const totalNetCapital = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+  // Add / remove funds directly on the balance
+  const handleAdjustBalance = async (delta: number) => {
+    try {
+      setBalance(await financeService.adjustBalance(delta));
+      setSnackbar({
+        open: true,
+        message: `${delta > 0 ? "Added" : "Removed"} Rs. ${Math.abs(delta).toLocaleString()} ${delta > 0 ? "to" : "from"} balance`,
+        severity: "success",
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to update balance";
+      setSnackbar({ open: true, message: msg, severity: "error" });
+    }
+  };
 
   if (loading) {
     return (
@@ -217,14 +213,14 @@ export default function FinancePage() {
     >
       {/* 1. Top Editorial Header & Philosophy */}
       <FinanceHeader
-        selectedMonth={filterCriteria.selectedMonth || "2026-09"}
+        selectedMonth={filterCriteria.selectedMonth || currentMonthKey()}
         onMonthChange={handleMonthChange}
         onExportCsv={handleExportCsv}
-        onOpenAddTransaction={() => setAddTransactionOpen(true)}
+        onAddTransaction={() => setAddTransactionOpen(true)}
       />
 
-      {/* 2. Liquidity & Holdings Accounts Ribbon */}
-      <AccountsRibbon accounts={accounts} totalNetCapital={totalNetCapital} />
+      {/* 2. Single Balance */}
+      <BalanceCard balance={balance} onAdjust={handleAdjustBalance} />
 
       {/* 3. Main Working Split (Asymmetric 68% / 32% on desktop) */}
       <Box
@@ -249,11 +245,8 @@ export default function FinancePage() {
           />
         </Box>
 
-        {/* Right Column: Financial Intelligence & Fast Entry */}
+        {/* Right Column: Financial Intelligence */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
-          {/* Docked Quick Entry Panel */}
-          <QuickEntryDock onSubmit={handleCreateTransaction} />
-
           {/* Monthly Cashflow Velocity */}
           {velocity && <CashflowVelocityCard velocity={velocity} />}
 
@@ -265,11 +258,10 @@ export default function FinancePage() {
         </Box>
       </Box>
 
-      {/* Add Transaction Dialog */}
       <AddTransactionModal
         open={addTransactionOpen}
         onClose={() => setAddTransactionOpen(false)}
-        onSubmit={handleCreateTransaction}
+        onSuccess={handleTransactionSaved}
       />
 
       {/* Notification Toast */}

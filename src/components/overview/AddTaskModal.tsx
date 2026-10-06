@@ -31,7 +31,6 @@ export default function AddTaskModal({
   const [title, setTitle] = useState<string>("");
   const [category, setCategory] = useState<TaskCategory>("work");
   const [priority, setPriority] = useState<PriorityLevel>("medium");
-  const [dueInfo, setDueInfo] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
@@ -39,7 +38,6 @@ export default function AddTaskModal({
     setTitle("");
     setCategory("work");
     setPriority("medium");
-    setDueInfo("");
     setError("");
   };
 
@@ -57,27 +55,17 @@ export default function AddTaskModal({
 
     setIsSubmitting(true);
     try {
-      const categoryLabels: Record<TaskCategory, string> = {
-        work: "Work · Engineering",
-        personal: "Personal · Health",
-        finance: "Finance · Operating",
-        learning: "Learning · Research",
-      };
-
       const newTask = await overviewService.addTask({
         title: title.trim(),
         category,
-        categoryLabel: categoryLabels[category],
         priority,
-        isCompleted: false,
-        dueInfo: dueInfo.trim() || undefined,
       });
 
       onTaskAdded(newTask);
       handleClose();
     } catch (err) {
       console.error("Failed to add task:", err);
-      setError("Failed to create task");
+      setError(err instanceof Error ? err.message : "Failed to create task");
     } finally {
       setIsSubmitting(false);
     }
@@ -161,19 +149,6 @@ export default function AddTaskModal({
             </Select>
           </FormControl>
 
-          <TextField
-            fullWidth
-            label="Due / Schedule (Optional)"
-            placeholder="e.g. Due 5:30 PM"
-            value={dueInfo}
-            onChange={(e) => setDueInfo(e.target.value)}
-            size="small"
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                bgcolor: "#FFFFFF",
-              },
-            }}
-          />
         </Stack>
       </DialogContent>
 

@@ -6,22 +6,22 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
-import MenuIcon from "@mui/icons-material/Menu";
+import Avatar from "@mui/material/Avatar";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 interface MobileTopBarProps {
   systemStatus?: "steady" | "reconciling" | "attention";
-  onOpenNavDrawer?: () => void;
 }
 
 export default function MobileTopBar({
   systemStatus = "steady",
-  onOpenNavDrawer,
 }: MobileTopBarProps) {
   const router = useRouter();
   const { signOut } = useClerk();
+  const { displayName, avatarLetter, avatarUrl, email, openUserProfile } = useUserProfile();
 
   const handleLogout = async () => {
     try {
@@ -49,20 +49,8 @@ export default function MobileTopBar({
         zIndex: 1100,
       }}
     >
-      {/* Brand Anchor Logo & Mobile Menu Drawer Trigger */}
+      {/* Brand Anchor Logo (navigation lives in the bottom tab bar) */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <IconButton
-          size="small"
-          onClick={onOpenNavDrawer}
-          aria-label="open navigation menu"
-          sx={{
-            color: "#0B1628",
-            p: 0.75,
-            "&:hover": { bgcolor: "rgba(11, 22, 40, 0.06)" },
-          }}
-        >
-          <MenuIcon fontSize="small" />
-        </IconButton>
         <Box
           sx={{
             width: 32,
@@ -130,8 +118,23 @@ export default function MobileTopBar({
         </Box>
       </Box>
 
-      {/* Right Action: Logout */}
+      {/* Right Actions: Profile & Logout */}
       <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+        <Tooltip title={email ? `${displayName} (${email})` : displayName}>
+          <IconButton
+            onClick={openUserProfile}
+            aria-label="Open profile"
+            sx={{ p: 0.5 }}
+          >
+            <Avatar
+              src={avatarUrl}
+              alt={displayName}
+              sx={{ width: 32, height: 32, bgcolor: "#0B1628", color: "#FCFBF8", fontSize: "0.875rem", fontWeight: 600 }}
+            >
+              {avatarLetter}
+            </Avatar>
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Log Out">
           <IconButton
             size="small"

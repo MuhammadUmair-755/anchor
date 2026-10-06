@@ -1,164 +1,48 @@
-import {
-  DailyTask,
-  TaskItem,
-  BudgetEnvelope,
-  ExecutiveOverviewData,
-} from '@/types/models';
-import { mockOverviewData } from './mockData';
-import { apiFetch } from '@/lib/api/client';
+import { DailyTask, TaskItem, ExecutiveOverviewData, TransactionCategory } from '@/types/models';
+import { apiRequest } from '@/lib/api/client';
 
-// Mutable in-memory store initialized with authoritative mock state
-let state: ExecutiveOverviewData = JSON.parse(JSON.stringify(mockOverviewData));
+const toDailyTask = (t: TaskItem): DailyTask => ({
+  id: t.id,
+  title: t.title,
+  category: t.category as DailyTask['category'],
+  categoryLabel: t.categoryLabel || t.category.toUpperCase(),
+  priority: t.priority,
+  isCompleted: t.isCompleted,
+  dueInfo: t.dueInfo,
+  createdAt: t.createdAt,
+  completedAt: t.completedAt,
+});
 
-/**
- * Overview Service - Decoupled asynchronous business logic for Executive Overview
- */
+/** Overview API client. Stateless; every call throws on failure so the UI can report it. */
 export const overviewService = {
-  /**
-   * Retrieves executive overview aggregated data from /api/overview
-   */
-  async getOverviewData(): Promise<ExecutiveOverviewData> {
-    const apiData = await apiFetch<ExecutiveOverviewData>('/api/overview');
-    if (apiData) {
-      state = apiData;
-      return apiData;
-    }
-    return JSON.parse(JSON.stringify(state));
+  getOverviewData(): Promise<ExecutiveOverviewData> {
+    return apiRequest<ExecutiveOverviewData>('/api/overview');
   },
 
-  /**
-   * Toggles task completion state via API
-   */
-  async toggleTask(taskId: string): Promise<DailyTask> {
-    const taskIndex = state.dailyTasks.findIndex((t) => t.id === taskId);
-    const existing = taskIndex !== -1 ? state.dailyTasks[taskIndex] : null;
-    const targetCompleted = existing ? !existing.isCompleted : true;
-
-    // Call API
-    const apiTask = await apiFetch<TaskItem>(`/api/tasks/${taskId}`, {
+  async setTaskCompleted(taskId: string, isCompleted: boolean): Promise<DailyTask> {
+    const task = await apiRequest<TaskItem>(`/api/tasks/${taskId}`, {
       method: 'PATCH',
-      body: JSON.stringify({ isCompleted: targetCompleted }),
+      body: JSON.stringify({ isCompleted }),
     });
-
-    if (apiTask) {
-      const updatedTask: DailyTask = {
-        id: apiTask.id,
-        title: apiTask.title,
-        category: apiTask.category as DailyTask['category'],
-        categoryLabel: apiTask.categoryLabel || apiTask.category.toUpperCase(),
-        priority: apiTask.priority,
-        isCompleted: apiTask.isCompleted,
-        dueInfo: apiTask.dueInfo,
-        createdAt: apiTask.createdAt,
-        completedAt: apiTask.completedAt,
-      };
-      if (taskIndex !== -1) {
-        state.dailyTasks[taskIndex] = updatedTask;
-      }
-      return updatedTask;
-    }
-
-    if (!existing) {
-      throw new Error(`Task with id "${taskId}" not found.`);
-    }
-
-    const isCompleted = !existing.isCompleted;
-    const fallbackTask: DailyTask = {
-      ...existing,
-      isCompleted,
-      completedAt: isCompleted ? new Date().toISOString() : undefined,
-      dueInfo: isCompleted
-        ? `Completed ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-        : existing.dueInfo,
-    };
-
-    state.dailyTasks[taskIndex] = fallbackTask;
-    return JSON.parse(JSON.stringify(fallbackTask));
+    return toDailyTask(task);
   },
 
-  /**
-   * Adds a new daily task
-   */
-  async addTask(task: Omit<DailyTask, 'id' | 'createdAt'>): Promise<DailyTask> {
-    const apiTask = await apiFetch<TaskItem>('/api/tasks', {
+  /** Tasks added from "Today's Focus" are due today. */
+  async addTask(task: Pick<DailyTask, 'title' | 'category' | 'priority'>): Promise<DailyTask> {
+    const created = await apiRequest<TaskItem>('/api/tasks', {
       method: 'POST',
       body: JSON.stringify({
         title: task.title,
         priority: task.priority,
         category: task.category,
-        tabCategory: 'today',
+        dueDate: new Date().toLocaleDateString('en-CA'), // YYYY-MM-DD, local
       }),
     });
-
-    if (apiTask) {
-      const newTask: DailyTask = {
-        id: apiTask.id,
-        title: apiTask.title,
-        category: apiTask.category as DailyTask['category'],
-        categoryLabel: apiTask.categoryLabel || apiTask.category.toUpperCase(),
-        priority: apiTask.priority,
-        isCompleted: apiTask.isCompleted,
-        dueInfo: apiTask.dueInfo,
-        createdAt: apiTask.createdAt,
-      };
-      state.dailyTasks.unshift(newTask);
-      return newTask;
-    }
-
-    const newTask: DailyTask = {
-      ...task,
-      id: `task-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      createdAt: new Date().toISOString(),
-    };
-
-    state.dailyTasks.unshift(newTask);
-    return JSON.parse(JSON.stringify(newTask));
+    return toDailyTask(created);
   },
 
-  /**
-   * Updates an envelope's allocated amount and recalculates burn rate
-   */
-  async updateBudgetEnvelope(
-    envelopeId: string,
-    allocatedAmount: number
-  ): Promise<BudgetEnvelope> {
-    const envelopeIndex = state.budgetEnvelopes.findIndex((e) => e.id === envelopeId);
-    if (envelopeIndex === -1) {
-      throw new Error(`Budget envelope with id "${envelopeId}" not found.`);
-    }
-
-    const current = state.budgetEnvelopes[envelopeIndex];
-    const spentAmount = current.spentAmount;
-    const burnPercentage = allocatedAmount > 0
-      ? Number(((spentAmount / allocatedAmount) * 100).toFixed(1))
-      : 100;
-    const bufferRemaining = Math.max(0, allocatedAmount - spentAmount);
-
-    let burnRateStatus: BudgetEnvelope['burnRateStatus'] = 'normal';
-    if (burnPercentage >= 100) {
-      burnRateStatus = 'exceeded';
-    } else if (burnPercentage >= 90) {
-      burnRateStatus = 'alert';
-    } else if (burnPercentage >= 75) {
-      burnRateStatus = 'contained';
-    }
-
-    const updatedEnvelope: BudgetEnvelope = {
-      ...current,
-      allocatedAmount,
-      burnPercentage,
-      bufferRemaining,
-      burnRateStatus,
-    };
-
-    state.budgetEnvelopes[envelopeIndex] = updatedEnvelope;
-    return JSON.parse(JSON.stringify(updatedEnvelope));
-  },
-
-  /**
-   * Resets in-memory state back to baseline fixtures (useful for testing)
-   */
-  async resetState(): Promise<void> {
-    state = JSON.parse(JSON.stringify(mockOverviewData));
+  /** Saves this month's budget per category (amount 0 clears it). */
+  async saveBudgets(budgets: { category: TransactionCategory; amount: number }[]): Promise<void> {
+    await apiRequest('/api/budgets', { method: 'PUT', body: JSON.stringify({ budgets }) });
   },
 };

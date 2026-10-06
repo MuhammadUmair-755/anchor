@@ -1,456 +1,169 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
-import Typography from "@mui/material/Typography";
-import {
-  CalendarDayCell,
-  DayInspectorData,
-  SovereignGoal,
-  TemporalHealthMetrics,
-  NewCalendarEventPayload,
-} from "@/types/models";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import AddIcon from "@mui/icons-material/Add";
+import { CalendarDay, NewCalendarEventPayload } from "@/types/models";
 import { calendarService } from "@/services/calendarService";
-import {
-  CalendarHeader,
-  TemporalCadenceLegend,
-  CalendarMatrix,
-  MatrixTemporalHealthBar,
-  DayNexusInspector,
-  SovereignGoalsHub,
-  NewEventModal,
-  AdjustMilestonesModal,
-} from "@/components/calendar";
+import { tasksService } from "@/services/tasksService";
+import { CalendarGrid, DayPanel, EventModal } from "@/components/calendar";
+import { currentMonthKey, monthLabel, shiftMonth, todayKey } from "@/lib/calendar";
 
 export default function CalendarPage() {
-  const [days, setDays] = useState<CalendarDayCell[]>([]);
-  const [selectedDateKey, setSelectedDateKey] = useState<string>("2026-09-11");
-  const [inspectorData, setInspectorData] = useState<DayInspectorData | null>(null);
-  const [goals, setGoals] = useState<SovereignGoal[]>([]);
-  const [temporalHealth, setTemporalHealth] = useState<TemporalHealthMetrics | null>(null);
-
-  const [activeView, setActiveView] = useState<"month" | "week" | "day">("month");
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [currentMonthKey, setCurrentMonthKey] = useState<string>("2026-09");
-  const [currentMonthDisplay, setCurrentMonthDisplay] = useState<string>("September 2026");
-  const [quarterLabel, setQuarterLabel] = useState<string>("Q3 Ledger");
-
+  const [today, setToday] = useState<string>(todayKey);
+  const [month, setMonth] = useState<string>(currentMonthKey);
+  const [selectedDateKey, setSelectedDateKey] = useState<string>(todayKey);
+  const [days, setDays] = useState<CalendarDay[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string>("");
+  const [eventModalOpen, setEventModalOpen] = useState<boolean>(false);
+  const [toast, setToast] = useState<{ message: string; severity: "success" | "error" } | null>(null);
 
-  // Modals
-  const [newEventOpen, setNewEventOpen] = useState<boolean>(false);
-  const [adjustMilestonesOpen, setAdjustMilestonesOpen] = useState<boolean>(false);
+  const showError = (err: unknown, fallback: string) =>
+    setToast({ message: err instanceof Error ? err.message : fallback, severity: "error" });
 
-  // Snackbar Notification
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: "success" | "info" | "error";
-  }>({
-    open: false,
-    message: "",
-    severity: "success",
-  });
-
-  // Initial Data Load
-  const loadCalendarData = useCallback(async () => {
+  const loadMonth = useCallback(async (m: string) => {
     try {
-      const [loadedDays, loadedInspector, loadedGoals, loadedHealth] = await Promise.all([
-        calendarService.getCalendarDays("2026-09"),
-        calendarService.getDayInspectorData(selectedDateKey),
-        calendarService.getSovereignGoals(),
-        calendarService.getTemporalHealth("2026-09"),
-      ]);
-
-      setDays(loadedDays);
-      setInspectorData(loadedInspector);
-      setGoals(loadedGoals);
-      setTemporalHealth(loadedHealth);
-      setLoading(false);
+      const data = await calendarService.getMonth(m);
+      setDays(data.days);
+      setLoadError("");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to load calendar records";
-      setError(msg);
+      setLoadError(err instanceof Error ? err.message : "Failed to load calendar");
+    } finally {
       setLoading(false);
     }
-  }, [selectedDateKey]);
+  }, []);
 
   useEffect(() => {
-    loadCalendarData();
-  }, [loadCalendarData]);
+    loadMonth(month);
+  }, [month, loadMonth]);
 
-  // Select Date Handler
-  const handleSelectDate = async (dateKey: string) => {
-    setSelectedDateKey(dateKey);
-    try {
-      const newInspector = await calendarService.getDayInspectorData(dateKey);
-      setInspectorData(newInspector);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to load day inspector";
-      setSnackbar({
-        open: true,
-        message: msg,
-        severity: "error",
-      });
-    }
+  const goToMonth = (m: string) => {
+    setMonth(m);
+    // Keep the selection inside the visible month: today if it's there, else the 1st
+    setSelectedDateKey(today.startsWith(m) ? today : `${m}-01`);
   };
 
-  // Toggle Day Task in Inspector
-  const handleToggleTask = async (taskId: string) => {
-    try {
-      const updated = await calendarService.toggleDayTask(selectedDateKey, taskId);
-      setInspectorData(updated);
-
-      // Refresh days to sync matrix pills for active month
-      const updatedDays = await calendarService.getCalendarDays(currentMonthKey);
-      setDays(updatedDays);
-
-      // Refresh health metrics for active month
-      const updatedHealth = await calendarService.getTemporalHealth(currentMonthKey);
-      setTemporalHealth(updatedHealth);
-
-      setSnackbar({
-        open: true,
-        message: "Task cadence status synchronized.",
-        severity: "success",
-      });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to toggle task";
-      setSnackbar({
-        open: true,
-        message: msg,
-        severity: "error",
-      });
-    }
+  const goToToday = () => {
+    const now = todayKey(); // the page may have been open past midnight
+    setToday(now);
+    setMonth(now.slice(0, 7));
+    setSelectedDateKey(now);
   };
 
-  // Record New Event / Entry
-  const handleCreateEvent = async (payload: NewCalendarEventPayload) => {
+  const handleAddEvent = async (payload: NewCalendarEventPayload): Promise<boolean> => {
     try {
       await calendarService.addEvent(payload);
-      setSnackbar({
-        open: true,
-        message: `Recorded new entry: "${payload.title}" on ${payload.date}`,
-        severity: "success",
-      });
-
-      // Reload for active month
-      const [updatedDays, updatedInspector, updatedHealth] = await Promise.all([
-        calendarService.getCalendarDays(currentMonthKey),
-        calendarService.getDayInspectorData(payload.date),
-        calendarService.getTemporalHealth(currentMonthKey),
-      ]);
-      setDays(updatedDays);
+      setToast({ message: `Added "${payload.title}"`, severity: "success" });
       setSelectedDateKey(payload.date);
-      setInspectorData(updatedInspector);
-      setTemporalHealth(updatedHealth);
+      if (payload.date.slice(0, 7) !== month) setMonth(payload.date.slice(0, 7));
+      else await loadMonth(month);
+      return true;
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to record event";
-      setSnackbar({
-        open: true,
-        message: msg,
-        severity: "error",
-      });
+      showError(err, "Failed to add event");
+      return false;
     }
   };
 
-  // Update Goal Progress
-  const handleUpdateGoal = async (goalId: string, percentage: number) => {
+  const handleDeleteEvent = async (id: string) => {
     try {
-      await calendarService.updateGoalProgress(goalId, percentage);
-      const updatedGoals = await calendarService.getSovereignGoals();
-      setGoals(updatedGoals);
-      setSnackbar({
-        open: true,
-        message: "Strategic milestone calibration saved.",
-        severity: "success",
-      });
+      await calendarService.deleteEvent(id);
+      setToast({ message: "Event deleted", severity: "success" });
+      await loadMonth(month);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to update milestone";
-      setSnackbar({
-        open: true,
-        message: msg,
-        severity: "error",
-      });
+      showError(err, "Failed to delete event");
     }
   };
 
-  // Dynamic Month Navigator
-  const handleNavigateMonth = async (direction: "prev" | "next") => {
-    const [yearStr, monthStr] = currentMonthKey.split("-");
-    let year = parseInt(yearStr, 10);
-    let monthNum = parseInt(monthStr, 10);
-
-    if (direction === "prev") {
-      monthNum -= 1;
-      if (monthNum < 1) {
-        monthNum = 12;
-        year -= 1;
-      }
-    } else {
-      monthNum += 1;
-      if (monthNum > 12) {
-        monthNum = 1;
-        year += 1;
-      }
-    }
-
-    const nextMonthKey = `${year}-${String(monthNum).padStart(2, "0")}`;
-    setCurrentMonthKey(nextMonthKey);
-
-    const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December",
-    ];
-    const newDisplay = `${monthNames[monthNum - 1]} ${year}`;
-    setCurrentMonthDisplay(newDisplay);
-
-    const quarterNum = Math.ceil(monthNum / 3);
-    const newQuarter =
-      nextMonthKey === "2026-09"
-        ? "Q3 Ledger"
-        : `Q${quarterNum} ${quarterNum >= 3 ? "Projections" : "Archive"}`;
-    setQuarterLabel(newQuarter);
-
-    // Synchronize selected day to the viewed month
-    const newSelectedDate = nextMonthKey === "2026-09" ? "2026-09-11" : `${nextMonthKey}-01`;
-    setSelectedDateKey(newSelectedDate);
-
+  const handleToggleTask = async (id: string, isCompleted: boolean) => {
     try {
-      const [newDays, newInspector, newHealth] = await Promise.all([
-        calendarService.getCalendarDays(nextMonthKey),
-        calendarService.getDayInspectorData(newSelectedDate),
-        calendarService.getTemporalHealth(nextMonthKey),
-      ]);
-      setDays(newDays);
-      setInspectorData(newInspector);
-      setTemporalHealth(newHealth);
-      setSnackbar({
-        open: true,
-        message: `Viewing ${newDisplay} (${newQuarter})`,
-        severity: "info",
-      });
+      await tasksService.updateTask(id, { isCompleted });
+      await loadMonth(month);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to load month";
-      setSnackbar({
-        open: true,
-        message: msg,
-        severity: "error",
-      });
+      showError(err, "Failed to update task");
     }
   };
 
-  // Today Jump Handler
-  const handleJumpToToday = async () => {
-    setCurrentMonthKey("2026-09");
-    setCurrentMonthDisplay("September 2026");
-    setQuarterLabel("Q3 Ledger");
-    try {
-      const septDays = await calendarService.getCalendarDays("2026-09");
-      setDays(septDays);
-      await handleSelectDate("2026-09-11");
-      setSnackbar({
-        open: true,
-        message: "Focused on Friday, September 11, 2026 (Active Anchor Focus)",
-        severity: "info",
-      });
-    } catch {
-      // Handled
-    }
-  };
-
-  const cycleRangeText = React.useMemo(() => {
-    if (activeView === "day") {
-      return "1 Day · Daily Vector Telemetry";
-    }
-    if (activeView === "week") {
-      return "7 Days · Week Cadence Focus";
-    }
-    if (currentMonthKey === "2026-09") {
-      return "30 Days · Week 36 to Week 40";
-    }
-    const [yearStr, monthStr] = currentMonthKey.split("-");
-    const year = parseInt(yearStr, 10);
-    const monthNum = parseInt(monthStr, 10);
-    const daysInMonth = new Date(Date.UTC(year, monthNum, 0)).getUTCDate();
-    return `${daysInMonth} Days · Monthly Cadence`;
-  }, [activeView, currentMonthKey]);
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "60vh",
-          gap: 2,
-        }}
-      >
-        <CircularProgress sx={{ color: "#111C2E" }} />
-        <Typography
-          sx={{
-            fontFamily: "var(--font-newsreader), Georgia, serif",
-            fontStyle: "italic",
-            color: "#75777D",
-            fontSize: "1.125rem",
-          }}
-        >
-          Synchronizing calendar matrix &amp; sovereign goals nexus...
-        </Typography>
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box sx={{ p: 4, maxWidth: 600, mx: "auto", mt: 6 }}>
-        <Alert severity="error" sx={{ borderRadius: "8px" }}>
-          {error}
-        </Alert>
-      </Box>
-    );
-  }
+  const selectedDay = days.find((d) => d.dateKey === selectedDateKey);
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        minHeight: "100%",
-      }}
-    >
-      {/* 1. Header with Month Controls, View Toggle, Search, + New Entry */}
-      <CalendarHeader
-        currentMonthDisplay={currentMonthDisplay}
-        quarterLabel={quarterLabel}
-        activeView={activeView}
-        onViewChange={(v) => {
-          setActiveView(v);
-          setSnackbar({
-            open: true,
-            message: `Switched cadence perspective to ${v} view.`,
-            severity: "info",
-          });
-        }}
-        onPrevMonth={() => handleNavigateMonth("prev")}
-        onNextMonth={() => handleNavigateMonth("next")}
-        onToday={handleJumpToToday}
-        onOpenNewEvent={() => setNewEventOpen(true)}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onFilterMatrix={() =>
-          setSnackbar({
-            open: true,
-            message: "Matrix filtering active across operational vectors (Finance, Tasks, Journal).",
-            severity: "info",
-          })
-        }
-        onNotifications={() =>
-          setSnackbar({
-            open: true,
-            message: "Cadence notifications synchronized: No pending alerts.",
-            severity: "info",
-          })
-        }
-        onViewOptions={() =>
-          setSnackbar({
-            open: true,
-            message: "Perspective configuration: Showing all active cross-system cadences.",
-            severity: "info",
-          })
-        }
-      />
-
-      {/* 2. Main Body Split: 65% Matrix / 35% Inspector & Goals */}
-      <Box
-        component="div"
-        sx={{
-          px: { xs: 0, sm: 0.5, md: 1 },
-          py: { xs: 1, sm: 1.5, md: 2 },
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", xl: "8fr 4fr" },
-          gap: { xs: 2, sm: 2.5, md: 3 },
-          maxWidth: 1720,
-          width: "100%",
-          mx: "auto",
-        }}
-      >
-        {/* SECTION 1: CALENDAR MATRIX (65% / 8 of 12 cols on desktop) */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, minWidth: 0 }}>
-          {/* Temporal Cadence Legend Bar */}
-          <TemporalCadenceLegend
-            title="TEMPORAL CADENCE"
-            cycleRangeText={cycleRangeText}
-          />
-
-          {/* Interactive 7-Column Calendar Grid Card */}
-          <CalendarMatrix
-            days={days}
-            selectedDateKey={selectedDateKey}
-            onSelectDate={handleSelectDate}
-            activeView={activeView}
-            searchQuery={searchQuery}
-          />
-
-          {/* Matrix Temporal Health Bar (Recessed Well) */}
-          {temporalHealth && <MatrixTemporalHealthBar metrics={temporalHealth} />}
+    <Box sx={{ width: "100%", maxWidth: 1400, mx: "auto", display: "flex", flexDirection: "column", gap: { xs: 2, md: 2.5 } }}>
+      {/* Header: month, navigation, add */}
+      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 1.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <IconButton aria-label="Previous month" onClick={() => goToMonth(shiftMonth(month, -1))} sx={{ border: "1px solid rgba(17, 28, 46, 0.12)" }}>
+            <ChevronLeftIcon />
+          </IconButton>
+          <Typography
+            component="h1"
+            sx={{ fontFamily: "var(--font-newsreader), Georgia, serif", fontSize: { xs: "1.5rem", sm: "2rem" }, fontWeight: 500, color: "#0B1628", minWidth: { sm: 230 }, textAlign: "center" }}
+          >
+            {monthLabel(month)}
+          </Typography>
+          <IconButton aria-label="Next month" onClick={() => goToMonth(shiftMonth(month, 1))} sx={{ border: "1px solid rgba(17, 28, 46, 0.12)" }}>
+            <ChevronRightIcon />
+          </IconButton>
         </Box>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button variant="outlined" onClick={goToToday} sx={{ textTransform: "none", color: "#0B1628", borderColor: "rgba(17, 28, 46, 0.2)" }}>
+            Today
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setEventModalOpen(true)}
+            sx={{ textTransform: "none", bgcolor: "#0B1628", "&:hover": { bgcolor: "#162338" } }}
+          >
+            Add event
+          </Button>
+        </Box>
+      </Box>
 
-        {/* SECTION 2: DAY NEXUS INSPECTOR & SOVEREIGN GOALS HUB (35% / 4 of 12 cols) */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, minWidth: 0 }}>
-          {/* Day Nexus Inspector Panel */}
-          {inspectorData && (
-            <DayNexusInspector
-              data={inspectorData}
-              selectedDateKey={selectedDateKey}
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
+          <CircularProgress sx={{ color: "#0B1628" }} />
+        </Box>
+      ) : loadError ? (
+        <Alert severity="error" action={<Button color="inherit" onClick={() => loadMonth(month)}>Retry</Button>}>
+          {loadError}
+        </Alert>
+      ) : (
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 2fr) minmax(320px, 1fr)" }, gap: { xs: 2, md: 2.5 }, alignItems: "start" }}>
+          <CalendarGrid days={days} selectedDateKey={selectedDateKey} todayKey={today} onSelectDate={setSelectedDateKey} />
+          {selectedDay && (
+            <DayPanel
+              day={selectedDay}
+              isToday={selectedDay.dateKey === today}
+              onAddEvent={() => setEventModalOpen(true)}
+              onDeleteEvent={handleDeleteEvent}
               onToggleTask={handleToggleTask}
             />
           )}
-
-          {/* Sovereign Goals Hub Persistent Cards */}
-          <SovereignGoalsHub
-            goals={goals}
-            onOpenAdjustMilestones={() => setAdjustMilestonesOpen(true)}
-          />
         </Box>
-      </Box>
+      )}
 
-      {/* New Entry / Event Modal */}
-      <NewEventModal
-        open={newEventOpen}
-        onClose={() => setNewEventOpen(false)}
-        onSubmit={handleCreateEvent}
-        defaultDate={selectedDateKey}
-      />
+      <EventModal open={eventModalOpen} defaultDate={selectedDateKey} onClose={() => setEventModalOpen(false)} onSubmit={handleAddEvent} />
 
-      {/* Adjust Milestones Modal */}
-      <AdjustMilestonesModal
-        open={adjustMilestonesOpen}
-        onClose={() => setAdjustMilestonesOpen(false)}
-        goals={goals}
-        onUpdateGoal={handleUpdateGoal}
-      />
-
-      {/* Notification Toast */}
       <Snackbar
-        open={snackbar.open}
+        open={!!toast}
         autoHideDuration={4000}
-        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        onClose={() => setToast(null)}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        sx={{ mb: { xs: 9, lg: 0 } }}
       >
-        <Alert
-          severity={snackbar.severity}
-          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-          sx={{ borderRadius: "8px", boxShadow: "0 4px 12px rgba(11,22,40,0.12)" }}
-        >
-          {snackbar.message}
-        </Alert>
+        {toast ? (
+          <Alert severity={toast.severity} onClose={() => setToast(null)} sx={{ borderRadius: 2 }}>
+            {toast.message}
+          </Alert>
+        ) : undefined}
       </Snackbar>
     </Box>
   );
