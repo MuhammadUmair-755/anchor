@@ -22,6 +22,23 @@ export async function getAuthUser(): Promise<AuthUser | null> {
       const fullName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Anchor Operator";
       const imageUrl = user?.imageUrl || null;
 
+      // Auto-provision user profile in Supabase profiles table on first access
+      try {
+        const { createAdminClient } = await import("@/lib/supabase/admin");
+        const supabase = createAdminClient();
+        await supabase.from("profiles").upsert(
+          {
+            id: session.userId,
+            email,
+            full_name: fullName,
+            avatar_url: imageUrl,
+          },
+          { onConflict: "id", ignoreDuplicates: true }
+        );
+      } catch {
+        // Non-blocking fallback
+      }
+
       return {
         userId: session.userId,
         email,
