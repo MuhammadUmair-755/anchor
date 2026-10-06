@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth/getAuthUser";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { CashflowVelocity, RecurringObligation } from "@/types/models";
+import { CashflowVelocity } from "@/types/models";
 
 export const dynamic = "force-dynamic";
 
@@ -18,10 +18,7 @@ export async function GET() {
     const supabase = createAdminClient();
     const userId = authUser.userId;
 
-    const [{ data: transactions }, { data: recurring }] = await Promise.all([
-      supabase.from("transactions").select("*").eq("user_id", userId),
-      supabase.from("recurring_obligations").select("*").eq("user_id", userId).order("amount", { ascending: false }),
-    ]);
+    const { data: transactions } = await supabase.from("transactions").select("*").eq("user_id", userId);
 
     let totalInflow = 0;
     let totalOutflow = 0;
@@ -52,38 +49,9 @@ export async function GET() {
       targetRetentionRate: 65,
       inflowCount,
       outflowCount,
-      hotspots: [
-        {
-          id: "hotspot-1",
-          title: "Fixed Commitments Containment",
-          metric: `${Math.round((totalOutflow / (totalInflow || 1)) * 100)}% burn rate`,
-          severity: retentionRate >= 50 ? "info" : "warning",
-        },
-        {
-          id: "hotspot-2",
-          title: "Net Treasury Retention",
-          metric: `${retentionRate}% retained`,
-          severity: retentionRate >= 65 ? "info" : "warning",
-        },
-      ],
     };
 
-    const mappedRecurring: RecurringObligation[] = (recurring || []).map((r) => ({
-      id: r.id,
-      name: r.name,
-      amount: Number(r.amount),
-      currency: r.currency as RecurringObligation['currency'],
-      billingCycle: r.billing_cycle as RecurringObligation['billingCycle'],
-      renewalNotice: r.renewal_notice || "Active",
-      status: r.status as RecurringObligation['status'],
-      category: r.category as RecurringObligation['category'],
-      icon: r.icon || "SubscriptionsOutlined",
-    }));
-
-    return NextResponse.json({
-      velocity,
-      recurring: mappedRecurring,
-    });
+    return NextResponse.json({ velocity });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Internal Server Error";
     return NextResponse.json({ error: message }, { status: 500 });

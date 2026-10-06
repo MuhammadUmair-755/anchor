@@ -106,13 +106,6 @@ export interface OutflowSector {
   strokeDashOffset: number;
 }
 
-export interface VelocityHotspot {
-  id: string;
-  title: string;
-  metric: string;
-  severity: 'info' | 'warning' | 'critical';
-}
-
 export interface CashflowVelocity {
   cycleDay: number;
   cycleTotalDays: number;
@@ -123,19 +116,6 @@ export interface CashflowVelocity {
   targetRetentionRate: number;
   inflowCount: number;
   outflowCount: number;
-  hotspots: VelocityHotspot[];
-}
-
-export interface RecurringObligation {
-  id: string;
-  name: string;
-  amount: number;
-  currency: CurrencyCode;
-  billingCycle: 'monthly' | 'quarterly' | 'annual';
-  renewalNotice: string;
-  status: 'upcoming' | 'cleared' | 'alert';
-  category: TransactionCategory;
-  icon: string;
 }
 
 // ----------------------------------------------------------------------------

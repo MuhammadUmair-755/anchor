@@ -1,7 +1,6 @@
 import {
   Transaction,
   CashflowVelocity,
-  RecurringObligation,
   TransactionFilterCriteria,
   PaginatedTransactionsResponse,
   QuickEntryPayload,
@@ -20,7 +19,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   other: 'Other Outflow',
 };
 
-type VelocityResponse = { velocity: CashflowVelocity; recurring: RecurringObligation[] };
+type VelocityResponse = { velocity: CashflowVelocity };
 
 /** Finance API client. Every call throws on failure so the UI can report it. */
 export const financeService = {
@@ -67,10 +66,6 @@ export const financeService = {
 
   async getCashflowVelocity(): Promise<CashflowVelocity> {
     return (await apiRequest<VelocityResponse>('/api/finance/velocity')).velocity;
-  },
-
-  async getRecurringObligations(): Promise<RecurringObligation[]> {
-    return (await apiRequest<VelocityResponse>('/api/finance/velocity')).recurring;
   },
 
   /** Exports the filtered ledger as an RFC-4180 CSV string. */

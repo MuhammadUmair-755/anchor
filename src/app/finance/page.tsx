@@ -9,7 +9,6 @@ import Typography from "@mui/material/Typography";
 import {
   Transaction,
   CashflowVelocity,
-  RecurringObligation,
   TransactionFilterCriteria,
 } from "@/types/models";
 import { financeService } from "@/services/financeService";
@@ -20,7 +19,6 @@ import {
   AddTransactionModal,
   LedgerSection,
   CashflowVelocityCard,
-  RecurringObligationsCard,
 } from "@/components/finance";
 
 export default function FinancePage() {
@@ -29,8 +27,6 @@ export default function FinancePage() {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [velocity, setVelocity] = useState<CashflowVelocity | null>(null);
-  const [recurring, setRecurring] = useState<RecurringObligation[]>([]);
-  const [totalMonthlyObligations, setTotalMonthlyObligations] = useState<number>(0);
 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,11 +56,10 @@ export default function FinancePage() {
   // Load Transactions & Auxiliary Finance Data
   const loadFinanceData = useCallback(async () => {
     try {
-      const [bal, txResponse, vel, recs] = await Promise.all([
+      const [bal, txResponse, vel] = await Promise.all([
         financeService.getBalance(),
         financeService.getTransactions(filterCriteria),
         financeService.getCashflowVelocity(),
-        financeService.getRecurringObligations(),
       ]);
 
       setBalance(bal);
@@ -72,10 +67,6 @@ export default function FinancePage() {
       setTotalCount(txResponse.totalCount);
       setTotalPages(txResponse.totalPages);
       setVelocity(vel);
-      setRecurring(recs);
-
-      const sumObligations = recs.reduce((acc, curr) => acc + curr.amount, 0);
-      setTotalMonthlyObligations(sumObligations);
       setLoading(false);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to load financial records";
@@ -249,12 +240,6 @@ export default function FinancePage() {
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
           {/* Monthly Cashflow Velocity */}
           {velocity && <CashflowVelocityCard velocity={velocity} />}
-
-          {/* Recurring Obligations */}
-          <RecurringObligationsCard
-            obligations={recurring}
-            totalMonthlyObligations={totalMonthlyObligations}
-          />
         </Box>
       </Box>
 
