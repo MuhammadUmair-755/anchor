@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth/getAuthUser";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { localISODate } from "../tasks/shared";
+import { toEnvelope } from "@/lib/budgets";
 import { ExecutiveOverviewData, OutflowSector, BudgetEnvelope, DailyTask, TodayDebitItem } from "@/types/models";
 
 export const dynamic = "force-dynamic";
@@ -93,7 +94,7 @@ export async function GET() {
         label: CATEGORY_LABELS[cat] || cat,
         percentage: pct,
         amount: amt,
-        currency: "INR",
+        currency: "PKR",
         color: CATEGORY_COLORS[cat] || "#94a3b8",
         strokeDashArray: `${pct} ${100 - pct}`,
         strokeDashOffset,
@@ -110,29 +111,18 @@ export async function GET() {
     }
     const activeEnvelopes = [...latestByCategory.values()].filter((env) => Number(env.allocated_amount) > 0);
 
-    const budgetEnvelopes: BudgetEnvelope[] = activeEnvelopes.map((env) => {
-      const spent = categoryExpensesMap[env.category] || 0;
-      const allocated = Number(env.allocated_amount);
-      const burnPct = allocated > 0 ? Math.round((spent / allocated) * 100) : 0;
-      let burnRateStatus: "normal" | "contained" | "alert" | "exceeded" = "normal";
-      if (burnPct > 100) burnRateStatus = "exceeded";
-      else if (burnPct > 80) burnRateStatus = "alert";
-      else if (burnPct > 50) burnRateStatus = "contained";
-
-      return {
+    const budgetEnvelopes: BudgetEnvelope[] = activeEnvelopes.map((env) =>
+      toEnvelope({
         id: env.id,
-        category: env.category as BudgetEnvelope['category'],
+        category: env.category as BudgetEnvelope["category"],
         label: env.label,
-        allocatedAmount: allocated,
-        spentAmount: spent,
-        currency: env.currency as BudgetEnvelope['currency'],
-        burnRateStatus,
-        burnPercentage: burnPct,
-        bufferRemaining: Math.max(0, allocated - spent),
+        allocated: Number(env.allocated_amount),
+        spent: categoryExpensesMap[env.category] || 0,
         cycle: env.cycle,
-        icon: env.icon || "SavingsOutlined",
-      };
-    });
+        icon: env.icon,
+        currency: env.currency as BudgetEnvelope["currency"],
+      })
+    );
 
     const budgetCap = budgetEnvelopes.reduce((acc, e) => acc + e.allocatedAmount, 0);
     const totalSpent = budgetEnvelopes.reduce((acc, e) => acc + e.spentAmount, 0);
@@ -179,7 +169,7 @@ export async function GET() {
         year: "numeric",
       }),
       totalLiquidity,
-      currency: "INR",
+      currency: "PKR",
       monthlyInflow,
       inflowSourcesCount: (transactions || []).filter((tx) => Number(tx.amount) > 0 && (tx.date || "").startsWith(currentMonthStr)).length,
       totalExpenses,

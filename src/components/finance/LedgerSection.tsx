@@ -8,6 +8,9 @@ import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
 import InputAdornment from "@mui/material/InputAdornment";
+import IconButton from "@mui/material/IconButton";
+import CircularProgress from "@mui/material/CircularProgress";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -21,6 +24,7 @@ import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import LocalAtmIcon from "@mui/icons-material/LocalAtm";
 import { Transaction, TransactionFilterCriteria, FlowType, TransactionCategory } from "@/types/models";
+import { longDateLabel, todayKey } from "@/lib/calendar";
 
 interface LedgerSectionProps {
   transactions: Transaction[];
@@ -31,6 +35,9 @@ interface LedgerSectionProps {
   onFilterChange: (newCriteria: Partial<TransactionFilterCriteria>) => void;
   onPageChange: (newPage: number) => void;
   onExportCsv: () => void;
+  /** True while a filter/page change is fetching; the list shows a loader instead of stale rows. */
+  loading?: boolean;
+  onDelete: (tx: Transaction) => void;
 }
 
 export default function LedgerSection({
@@ -42,6 +49,8 @@ export default function LedgerSection({
   onFilterChange,
   onPageChange,
   onExportCsv,
+  loading = false,
+  onDelete,
 }: LedgerSectionProps) {
   const categories = [
     { key: "all", label: "All" },
@@ -93,13 +102,8 @@ export default function LedgerSection({
     groupedTransactions[key].push(tx);
   });
 
-  const formatGroupHeader = (dateStr: string) => {
-    if (dateStr === "2026-09-11") return "TODAY — FRIDAY, SEP 11";
-    if (dateStr === "2026-09-10") return "YESTERDAY — THURSDAY, SEP 10";
-    if (dateStr === "2026-09-08") return "EARLIER THIS WEEK — TUESDAY, SEP 08";
-    if (dateStr === "2026-09-01") return "SEPTEMBER 01";
-    return dateStr;
-  };
+  const formatGroupHeader = (dateStr: string) =>
+    dateStr === todayKey() ? `Today — ${longDateLabel(dateStr)}` : longDateLabel(dateStr);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
@@ -341,7 +345,11 @@ export default function LedgerSection({
           boxShadow: "0 1px 3px rgba(17, 28, 46, 0.03)",
         }}
       >
-        {Object.keys(groupedTransactions).length === 0 ? (
+        {loading ? (
+          <Box role="status" aria-label="Loading transactions" sx={{ p: 6, display: "flex", justifyContent: "center" }}>
+            <CircularProgress size={28} sx={{ color: "#111C2E" }} />
+          </Box>
+        ) : Object.keys(groupedTransactions).length === 0 ? (
           <Box sx={{ p: 6, textAlign: "center" }}>
             <Typography variant="body2" sx={{ color: "#75777D" }}>
               No transactions match the selected filter criteria.
@@ -471,6 +479,7 @@ export default function LedgerSection({
                           </Box>
                         </Box>
 
+                        <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 }, flexShrink: 0 }}>
                         <Box sx={{ textAlign: "right" }}>
                           <Typography
                             sx={{
@@ -492,6 +501,16 @@ export default function LedgerSection({
                           >
                             {tx.time}
                           </Typography>
+                        </Box>
+                        <IconButton
+                          size="small"
+                          aria-label={`Delete ${tx.payeeOrPayer}`}
+                          disabled={tx.id.startsWith("temp-")}
+                          onClick={() => onDelete(tx)}
+                          sx={{ color: "#75777D", "&:hover": { color: "#8C3F3B", bgcolor: "rgba(140, 63, 59, 0.08)" } }}
+                        >
+                          <DeleteOutlinedIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
                         </Box>
                       </Box>
                     );

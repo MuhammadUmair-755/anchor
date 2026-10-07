@@ -21,6 +21,7 @@ import { TaskItem } from "@/types/models";
 import { tasksService, filterTasks, TaskInput, TaskTab } from "@/services/tasksService";
 import TaskList from "@/components/tasks/TaskList";
 import TaskModal from "@/components/tasks/TaskModal";
+import { tabCategoryFor } from "@/app/api/tasks/shared";
 
 const TABS: { id: TaskTab; label: string; empty: string }[] = [
   { id: "open", label: "Open", empty: "Nothing open. Nice work." },
@@ -30,6 +31,18 @@ const TABS: { id: TaskTab; label: string; empty: string }[] = [
 ];
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : "Something went wrong");
+
+/** What the saved task will look like, so the list can show it before the server answers. */
+const applyInput = (base: TaskItem, input: TaskInput): TaskItem => ({
+  ...base,
+  title: input.title,
+  category: input.category,
+  categoryLabel: input.category.toUpperCase(),
+  priority: input.priority,
+  dueDate: input.dueDate ?? undefined,
+  dueTime: input.dueTime ?? undefined,
+  tabCategory: tabCategoryFor(base.isCompleted, input.dueDate),
+});
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
@@ -54,25 +67,38 @@ export default function TasksPage() {
   const replace = (t: TaskItem) => setTasks((prev) => prev.map((p) => (p.id === t.id ? t : p)));
   const fail = (err: unknown) => setToast({ message: errorText(err), severity: "error" });
 
+  // All writes are optimistic: the list changes now and rolls back if the server refuses.
   const handleSave = async (input: TaskInput) => {
-    try {
-      if (editing) {
-        replace(await tasksService.updateTask(editing.id, input));
+    if (editing) {
+      const original = editing;
+      replace(applyInput(original, input));
+      try {
+        replace(await tasksService.updateTask(original.id, input));
         setToast({ message: "Task updated", severity: "success" });
-      } else {
-        const created = await tasksService.createTask(input);
-        setTasks((prev) => [created, ...prev]);
-        setToast({ message: "Task added", severity: "success" });
+      } catch (err) {
+        replace(original);
+        fail(err);
       }
-      setEditing(undefined);
+      return;
+    }
+    const temp = applyInput(
+      { id: `temp-${Date.now()}`, isCompleted: false, createdAt: new Date().toISOString() } as TaskItem,
+      input
+    );
+    setTasks((prev) => [temp, ...prev]);
+    try {
+      const created = await tasksService.createTask(input);
+      setTasks((prev) => prev.map((t) => (t.id === temp.id ? created : t)));
+      setToast({ message: "Task added", severity: "success" });
     } catch (err) {
+      setTasks((prev) => prev.filter((t) => t.id !== temp.id));
       fail(err);
-      throw err; // keeps the modal open
     }
   };
 
   const handleToggle = async (task: TaskItem) => {
-    replace({ ...task, isCompleted: !task.isCompleted }); // optimistic
+    if (task.id.startsWith("temp-")) return; // still being created
+    replace({ ...task, isCompleted: !task.isCompleted });
     try {
       replace(await tasksService.updateTask(task.id, { isCompleted: !task.isCompleted }));
     } catch (err) {
@@ -85,11 +111,13 @@ export default function TasksPage() {
     if (!deleting) return;
     const task = deleting;
     setDeleting(null);
+    const index = tasks.findIndex((t) => t.id === task.id);
+    setTasks((prev) => prev.filter((t) => t.id !== task.id));
     try {
       await tasksService.deleteTask(task.id);
-      setTasks((prev) => prev.filter((t) => t.id !== task.id));
       setToast({ message: "Task deleted", severity: "success" });
     } catch (err) {
+      setTasks((prev) => [...prev.slice(0, index), task, ...prev.slice(index)]);
       fail(err);
     }
   };

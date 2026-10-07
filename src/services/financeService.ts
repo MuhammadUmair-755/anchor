@@ -7,7 +7,7 @@ import {
 } from '@/types/models';
 import { apiRequest } from '@/lib/api/client';
 
-const CATEGORY_LABELS: Record<string, string> = {
+export const CATEGORY_LABELS: Record<string, string> = {
   food_dining: 'Food & Dining',
   housing_utilities: 'Housing & Utilities',
   transport_transit: 'Transport & Transit',
@@ -62,6 +62,11 @@ export const financeService = {
         date: entry.date,
       }),
     });
+  },
+
+  /** Deletes a transaction; the server reverses it on the balance. */
+  async deleteTransaction(id: string): Promise<void> {
+    await apiRequest(`/api/finance/transactions/${id}`, { method: 'DELETE' });
   },
 
   async getCashflowVelocity(): Promise<CashflowVelocity> {

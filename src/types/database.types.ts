@@ -45,7 +45,7 @@ export interface Database {
           id: string;
           user_id: string;
           amount: number;
-          currency: 'INR' | 'USD' | 'EUR' | 'GBP';
+          currency: 'PKR' | 'USD' | 'EUR' | 'GBP';
           flow_type: 'inflow' | 'outflow' | 'transfer';
           category:
             | 'food_dining'
@@ -71,7 +71,7 @@ export interface Database {
           id?: string;
           user_id: string;
           amount: number;
-          currency?: 'INR' | 'USD' | 'EUR' | 'GBP';
+          currency?: 'PKR' | 'USD' | 'EUR' | 'GBP';
           flow_type: 'inflow' | 'outflow' | 'transfer';
           category:
             | 'food_dining'
@@ -97,7 +97,7 @@ export interface Database {
           id?: string;
           user_id?: string;
           amount?: number;
-          currency?: 'INR' | 'USD' | 'EUR' | 'GBP';
+          currency?: 'PKR' | 'USD' | 'EUR' | 'GBP';
           flow_type?: 'inflow' | 'outflow' | 'transfer';
           category?:
             | 'food_dining'
@@ -146,7 +146,7 @@ export interface Database {
             | 'other';
           label: string;
           allocated_amount: number;
-          currency: 'INR' | 'USD' | 'EUR' | 'GBP';
+          currency: 'PKR' | 'USD' | 'EUR' | 'GBP';
           cycle: string;
           icon: string | null;
           created_at: string;
@@ -167,7 +167,7 @@ export interface Database {
             | 'other';
           label: string;
           allocated_amount?: number;
-          currency?: 'INR' | 'USD' | 'EUR' | 'GBP';
+          currency?: 'PKR' | 'USD' | 'EUR' | 'GBP';
           cycle: string;
           icon?: string | null;
           created_at?: string;
@@ -188,7 +188,7 @@ export interface Database {
             | 'other';
           label?: string;
           allocated_amount?: number;
-          currency?: 'INR' | 'USD' | 'EUR' | 'GBP';
+          currency?: 'PKR' | 'USD' | 'EUR' | 'GBP';
           cycle?: string;
           icon?: string | null;
           created_at?: string;
@@ -211,7 +211,7 @@ export interface Database {
           user_id: string;
           name: string;
           amount: number;
-          currency: 'INR' | 'USD' | 'EUR' | 'GBP';
+          currency: 'PKR' | 'USD' | 'EUR' | 'GBP';
           billing_cycle: 'monthly' | 'quarterly' | 'annual';
           renewal_notice: string | null;
           status: 'upcoming' | 'cleared' | 'alert';
@@ -226,7 +226,7 @@ export interface Database {
           user_id: string;
           name: string;
           amount: number;
-          currency?: 'INR' | 'USD' | 'EUR' | 'GBP';
+          currency?: 'PKR' | 'USD' | 'EUR' | 'GBP';
           billing_cycle: 'monthly' | 'quarterly' | 'annual';
           renewal_notice?: string | null;
           status?: 'upcoming' | 'cleared' | 'alert';
@@ -241,7 +241,7 @@ export interface Database {
           user_id?: string;
           name?: string;
           amount?: number;
-          currency?: 'INR' | 'USD' | 'EUR' | 'GBP';
+          currency?: 'PKR' | 'USD' | 'EUR' | 'GBP';
           billing_cycle?: 'monthly' | 'quarterly' | 'annual';
           renewal_notice?: string | null;
           status?: 'upcoming' | 'cleared' | 'alert';

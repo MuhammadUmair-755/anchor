@@ -14,7 +14,8 @@ interface EventModalProps {
   open: boolean;
   defaultDate: string;
   onClose: () => void;
-  onSubmit: (payload: NewCalendarEventPayload) => Promise<boolean>;
+  /** Called with a valid event; the modal closes immediately and the page saves optimistically. */
+  onSubmit: (payload: NewCalendarEventPayload) => void;
 }
 
 function EventForm({ defaultDate, onClose, onSubmit }: Omit<EventModalProps, "open">) {
@@ -22,15 +23,12 @@ function EventForm({ defaultDate, onClose, onSubmit }: Omit<EventModalProps, "op
   const [date, setDate] = useState(defaultDate);
   const [time, setTime] = useState("");
   const [note, setNote] = useState("");
-  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !date) return;
-    setSaving(true);
-    const ok = await onSubmit({ title: title.trim(), date, time: time || undefined, note: note.trim() || undefined });
-    setSaving(false);
-    if (ok) onClose();
+    onSubmit({ title: title.trim(), date, time: time || undefined, note: note.trim() || undefined });
+    onClose();
   };
 
   return (
@@ -44,16 +42,16 @@ function EventForm({ defaultDate, onClose, onSubmit }: Omit<EventModalProps, "op
         <TextField label="Note (optional)" multiline minRows={2} value={note} onChange={(e) => setNote(e.target.value)} />
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={onClose} disabled={saving} sx={{ color: "#68717C", textTransform: "none" }}>
+        <Button onClick={onClose} sx={{ color: "#68717C", textTransform: "none" }}>
           Cancel
         </Button>
         <Button
           type="submit"
           variant="contained"
-          disabled={saving || !title.trim() || !date}
+          disabled={!title.trim() || !date}
           sx={{ bgcolor: "#0B1628", textTransform: "none", "&:hover": { bgcolor: "#162338" } }}
         >
-          {saving ? "Saving..." : "Add event"}
+          Add event
         </Button>
       </DialogActions>
     </form>

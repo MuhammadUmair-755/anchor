@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
@@ -11,11 +11,14 @@ import CircularProgress from "@mui/material/CircularProgress";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import AddIcon from "@mui/icons-material/Add";
-import { CalendarDay, NewCalendarEventPayload } from "@/types/models";
+import { CalendarDay, CalendarEvent, NewCalendarEventPayload } from "@/types/models";
 import { calendarService } from "@/services/calendarService";
 import { tasksService } from "@/services/tasksService";
 import { CalendarGrid, DayPanel, EventModal } from "@/components/calendar";
 import { currentMonthKey, monthLabel, shiftMonth, todayKey } from "@/lib/calendar";
+
+// Untimed events first, then by HH:MM.
+const byTime = (a: CalendarEvent, b: CalendarEvent) => (a.time ?? "").localeCompare(b.time ?? "");
 
 export default function CalendarPage() {
   const [today, setToday] = useState<string>(todayKey);
@@ -30,15 +33,19 @@ export default function CalendarPage() {
   const showError = (err: unknown, fallback: string) =>
     setToast({ message: err instanceof Error ? err.message : fallback, severity: "error" });
 
+  // Only the latest request may write state, so quick month changes never show a stale month.
+  const monthRequest = useRef(0);
   const loadMonth = useCallback(async (m: string) => {
+    const req = ++monthRequest.current;
     try {
       const data = await calendarService.getMonth(m);
+      if (req !== monthRequest.current) return;
       setDays(data.days);
       setLoadError("");
     } catch (err: unknown) {
-      setLoadError(err instanceof Error ? err.message : "Failed to load calendar");
+      if (req === monthRequest.current) setLoadError(err instanceof Error ? err.message : "Failed to load calendar");
     } finally {
-      setLoading(false);
+      if (req === monthRequest.current) setLoading(false);
     }
   }, []);
 
@@ -59,35 +66,48 @@ export default function CalendarPage() {
     setSelectedDateKey(now);
   };
 
-  const handleAddEvent = async (payload: NewCalendarEventPayload): Promise<boolean> => {
+  // All writes are optimistic: the grid changes now and rolls back if the server refuses.
+  const mapEvents = (fn: (events: CalendarEvent[], day: CalendarDay) => CalendarEvent[]) =>
+    setDays((prev) => prev.map((d) => ({ ...d, events: fn(d.events, d) })));
+
+  const handleAddEvent = async (payload: NewCalendarEventPayload) => {
+    const targetMonth = payload.date.slice(0, 7);
+    const temp: CalendarEvent = { id: `temp-${Date.now()}`, ...payload };
+    setSelectedDateKey(payload.date);
+    if (targetMonth !== month) setMonth(targetMonth); // that month loads fresh; re-sync after the save
+    else mapEvents((events, d) => (d.dateKey === payload.date ? [...events, temp].sort(byTime) : events));
     try {
-      await calendarService.addEvent(payload);
+      const saved = await calendarService.addEvent(payload);
+      if (targetMonth !== month) loadMonth(targetMonth);
+      else mapEvents((events) => events.map((e) => (e.id === temp.id ? saved : e)));
       setToast({ message: `Added "${payload.title}"`, severity: "success" });
-      setSelectedDateKey(payload.date);
-      if (payload.date.slice(0, 7) !== month) setMonth(payload.date.slice(0, 7));
-      else await loadMonth(month);
-      return true;
     } catch (err: unknown) {
+      mapEvents((events) => events.filter((e) => e.id !== temp.id));
       showError(err, "Failed to add event");
-      return false;
     }
   };
 
   const handleDeleteEvent = async (id: string) => {
+    if (id.startsWith("temp-")) return; // still being created
+    const before = days;
+    mapEvents((events) => events.filter((e) => e.id !== id));
     try {
       await calendarService.deleteEvent(id);
       setToast({ message: "Event deleted", severity: "success" });
-      await loadMonth(month);
     } catch (err: unknown) {
+      setDays(before);
       showError(err, "Failed to delete event");
     }
   };
 
   const handleToggleTask = async (id: string, isCompleted: boolean) => {
+    const setDone = (done: boolean) =>
+      setDays((prev) => prev.map((d) => ({ ...d, tasks: d.tasks.map((t) => (t.id === id ? { ...t, isCompleted: done } : t)) })));
+    setDone(isCompleted);
     try {
       await tasksService.updateTask(id, { isCompleted });
-      await loadMonth(month);
     } catch (err: unknown) {
+      setDone(!isCompleted);
       showError(err, "Failed to update task");
     }
   };

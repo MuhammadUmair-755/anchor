@@ -17,13 +17,14 @@ import CloseIcon from "@mui/icons-material/Close";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 
-import { QuickEntryPayload, Transaction, TransactionCategory } from "@/types/models";
-import { financeService } from "@/services/financeService";
+import { QuickEntryPayload, TransactionCategory } from "@/types/models";
+import { todayKey } from "@/lib/calendar";
 
 interface QuickEntryModalProps {
   open: boolean;
   onClose: () => void;
-  onSuccess?: (transaction: Transaction) => void;
+  /** Called with a valid entry; the modal closes immediately and the page saves optimistically. */
+  onSubmit: (entry: QuickEntryPayload) => void;
   initialIntent?: "spent" | "received";
 }
 
@@ -42,20 +43,19 @@ const CATEGORY_OPTIONS: { value: TransactionCategory; label: string }[] = [
 interface QuickEntryFormProps {
   initialIntent: "spent" | "received";
   onClose: () => void;
-  onSuccess?: (transaction: Transaction) => void;
+  onSubmit: (entry: QuickEntryPayload) => void;
 }
 
 function QuickEntryForm({
   initialIntent,
   onClose,
-  onSuccess,
+  onSubmit,
 }: QuickEntryFormProps) {
   const [intent, setIntent] = useState<"spent" | "received">(initialIntent);
   const [amount, setAmount] = useState<string>("");
   const [category, setCategory] = useState<TransactionCategory>("food_dining");
-  const [date, setDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState<string>(todayKey);
   const [memo, setMemo] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>("");
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -68,30 +68,15 @@ function QuickEntryForm({
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      const payload: QuickEntryPayload = {
-        intent,
-        amount: parsedAmount,
-        currency: "INR",
-        category,
-        date: date || new Date().toISOString().slice(0, 10),
-        memo: memo.trim() || undefined,
-      };
-
-      const newTx = await financeService.recordTransaction(payload);
-      setAmount("");
-      setMemo("");
-      if (onSuccess) {
-        onSuccess(newTx);
-      }
-      onClose();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to record transaction";
-      setErrorMsg(message);
-    } finally {
-      setIsSubmitting(false);
-    }
+    onSubmit({
+      intent,
+      amount: parsedAmount,
+      currency: "PKR",
+      category,
+      date: date || todayKey(),
+      memo: memo.trim() || undefined,
+    });
+    onClose();
   };
 
   return (
@@ -224,20 +209,19 @@ function QuickEntryForm({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2.5, pt: 1, gap: 1 }}>
-        <Button onClick={onClose} color="inherit" disabled={isSubmitting}>
+        <Button onClick={onClose} color="inherit">
           Cancel
         </Button>
         <Button
           type="submit"
           variant="contained"
-          disabled={isSubmitting}
           sx={{
             px: 3,
             backgroundColor: "#0B1628",
             "&:hover": { backgroundColor: "#162338" },
           }}
         >
-          {isSubmitting ? "Recording..." : "Save Transaction ↵"}
+          Save Transaction ↵
         </Button>
       </DialogActions>
     </form>
@@ -247,7 +231,7 @@ function QuickEntryForm({
 export default function QuickEntryModal({
   open,
   onClose,
-  onSuccess,
+  onSubmit,
   initialIntent = "spent",
 }: QuickEntryModalProps) {
   return (
@@ -301,7 +285,7 @@ export default function QuickEntryModal({
           key={initialIntent}
           initialIntent={initialIntent}
           onClose={onClose}
-          onSuccess={onSuccess}
+          onSubmit={onSubmit}
         />
       )}
     </Dialog>

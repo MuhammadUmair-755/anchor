@@ -10,10 +10,8 @@ import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import InputAdornment from "@mui/material/InputAdornment";
-import Alert from "@mui/material/Alert";
 import LinearProgress from "@mui/material/LinearProgress";
-import { BudgetEnvelope, OutflowSector } from "@/types/models";
-import { overviewService } from "@/services/overviewService";
+import { BudgetEnvelope, OutflowSector, TransactionCategory } from "@/types/models";
 import { BUDGET_CATEGORIES } from "@/lib/budgets";
 
 export interface AdjustAllocationsModalProps {
@@ -22,12 +20,13 @@ export interface AdjustAllocationsModalProps {
   envelopes: BudgetEnvelope[];
   /** This month's spending per category, shown next to each budget */
   sectors: OutflowSector[];
-  onSaved: () => void;
+  /** Called with every category's budget (0 = none); the modal closes immediately. */
+  onSave: (budgets: { category: TransactionCategory; amount: number }[]) => void;
 }
 
-const money = (n: number) => `Rs. ${Math.round(n).toLocaleString("en-IN")}`;
+const money = (n: number) => `Rs. ${Math.round(n).toLocaleString("en-PK")}`;
 
-function BudgetForm({ onClose, envelopes, sectors, onSaved }: Omit<AdjustAllocationsModalProps, "open">) {
+function BudgetForm({ onClose, envelopes, sectors, onSave }: Omit<AdjustAllocationsModalProps, "open">) {
   // Keep inputs as strings so the user can clear a field; blank means "no budget".
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(
@@ -37,8 +36,6 @@ function BudgetForm({ onClose, envelopes, sectors, onSaved }: Omit<AdjustAllocat
       })
     )
   );
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
 
   const amountOf = (category: string) => {
     const n = parseFloat(values[category]);
@@ -48,20 +45,9 @@ function BudgetForm({ onClose, envelopes, sectors, onSaved }: Omit<AdjustAllocat
   const total = BUDGET_CATEGORIES.reduce((sum, c) => sum + amountOf(c.category), 0);
   const invalid = BUDGET_CATEGORIES.some((c) => values[c.category] !== "" && !(parseFloat(values[c.category]) >= 0));
 
-  const handleSave = async () => {
-    setSaving(true);
-    setError("");
-    try {
-      await overviewService.saveBudgets(
-        BUDGET_CATEGORIES.map((c) => ({ category: c.category, amount: amountOf(c.category) }))
-      );
-      onSaved();
-      onClose();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to save budgets");
-    } finally {
-      setSaving(false);
-    }
+  const handleSave = () => {
+    onSave(BUDGET_CATEGORIES.map((c) => ({ category: c.category, amount: amountOf(c.category) })));
+    onClose();
   };
 
   return (
@@ -139,25 +125,19 @@ function BudgetForm({ onClose, envelopes, sectors, onSaved }: Omit<AdjustAllocat
             {money(total)}
           </Typography>
         </Box>
-
-        {error && (
-          <Alert severity="error" sx={{ mt: 2 }}>
-            {error}
-          </Alert>
-        )}
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={onClose} disabled={saving} sx={{ color: "#68717C", textTransform: "none" }}>
+        <Button onClick={onClose} sx={{ color: "#68717C", textTransform: "none" }}>
           Cancel
         </Button>
         <Button
           onClick={handleSave}
           variant="contained"
-          disabled={saving || invalid}
+          disabled={invalid}
           sx={{ bgcolor: "#0B1628", color: "#FCFBF8", textTransform: "none", "&:hover": { bgcolor: "#162338" } }}
         >
-          {saving ? "Saving..." : "Save budgets"}
+          Save budgets
         </Button>
       </DialogActions>
     </>

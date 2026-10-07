@@ -4,7 +4,7 @@
  */
 
 /** Supported currencies */
-export type CurrencyCode = 'INR' | 'USD' | 'EUR' | 'GBP';
+export type CurrencyCode = 'PKR' | 'USD' | 'EUR' | 'GBP';
 
 /** Financial transaction flow direction */
 export type FlowType = 'inflow' | 'outflow' | 'transfer';

@@ -45,13 +45,14 @@ export default function NotesView() {
   const [current, setCurrent] = useState<Note | null>(null);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [saving, setSaving] = useState(false);
 
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [toast, setToast] = useState<{ message: string; severity: "success" | "error" } | null>(null);
 
   const dirty = editing && (title !== (current?.title ?? "") || body !== (current?.body ?? ""));
+  // A new note has a temp id until the server answers; saving again then would create a duplicate.
+  const creating = Boolean(current?.id.startsWith("temp-"));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -93,30 +94,43 @@ export default function NotesView() {
   // Run `action` now, or after the user confirms discarding unsaved changes.
   const guard = (action: () => void) => (dirty ? setPendingAction(() => action) : action());
 
+  // Optimistic: the list and "Saved" state update now; typing during the request is never overwritten.
   const handleSave = async () => {
-    setSaving(true);
+    const input = { title: title.trim() || "Untitled", body };
+    const now = new Date().toISOString();
+    const previous = current;
+    const optimistic: Note = previous
+      ? { ...previous, ...input, updatedAt: now }
+      : { id: `temp-${Date.now()}`, ...input, createdAt: now, updatedAt: now };
+    setNotes((prev) => [optimistic, ...prev.filter((n) => n.id !== optimistic.id)]);
+    setCurrent(optimistic);
+    setTitle(input.title);
     try {
-      const input = { title: title.trim() || "Untitled", body };
-      const saved = current ? await notesService.update(current.id, input) : await notesService.create(input);
-      setNotes((prev) => [saved, ...prev.filter((n) => n.id !== saved.id)]);
-      openEditor(saved);
+      const saved = previous ? await notesService.update(previous.id, input) : await notesService.create(input);
+      setNotes((prev) => prev.map((n) => (n.id === optimistic.id ? saved : n)));
+      setCurrent((c) => (c?.id === optimistic.id ? saved : c));
     } catch (err) {
+      setNotes((prev) =>
+        previous ? prev.map((n) => (n.id === optimistic.id ? previous : n)) : prev.filter((n) => n.id !== optimistic.id)
+      );
+      setCurrent((c) => (c?.id === optimistic.id ? previous : c)); // edits stay in the editor as unsaved
       setToast({ message: errorText(err), severity: "error" });
-    } finally {
-      setSaving(false);
     }
   };
 
   const handleDelete = async () => {
     if (!current) return;
+    const note = current;
+    const index = notes.findIndex((n) => n.id === note.id);
     setConfirmDelete(false);
+    setNotes((prev) => prev.filter((n) => n.id !== note.id));
+    setEditing(false);
+    setCurrent(null);
     try {
-      await notesService.remove(current.id);
-      setNotes((prev) => prev.filter((n) => n.id !== current.id));
-      setEditing(false);
-      setCurrent(null);
+      await notesService.remove(note.id);
       setToast({ message: "Note deleted", severity: "success" });
     } catch (err) {
+      setNotes((prev) => [...prev.slice(0, index), note, ...prev.slice(index)]);
       setToast({ message: errorText(err), severity: "error" });
     }
   };
@@ -265,8 +279,8 @@ export default function NotesView() {
             onTitleChange={setTitle}
             onBodyChange={setBody}
             dirty={dirty}
-            saving={saving}
-            canDelete={Boolean(current)}
+            saving={creating}
+            canDelete={Boolean(current) && !creating}
             onSave={handleSave}
             onDelete={() => setConfirmDelete(true)}
             onBack={() => guard(() => setEditing(false))}

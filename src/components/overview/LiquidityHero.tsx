@@ -29,10 +29,10 @@ export default function LiquidityHero({
   retentionRatePercent = 0,
   currency = "Rs.",
 }: LiquidityHeroProps) {
-  const formattedLiquidity = totalLiquidity.toLocaleString("en-IN");
-  const formattedInflow = monthlyInflow.toLocaleString("en-IN");
-  const formattedExpenses = totalExpenses.toLocaleString("en-IN");
-  const formattedRetained = netRetained.toLocaleString("en-IN");
+  const formattedLiquidity = totalLiquidity.toLocaleString("en-PK");
+  const formattedInflow = monthlyInflow.toLocaleString("en-PK");
+  const formattedExpenses = totalExpenses.toLocaleString("en-PK");
+  const formattedRetained = netRetained.toLocaleString("en-PK");
 
   return (
     <Card

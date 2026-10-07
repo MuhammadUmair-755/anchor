@@ -19,7 +19,7 @@ export interface BudgetHealthProps {
 const statusColor = (pct: number) => (pct >= 100 ? "#8C3F3B" : pct >= 75 ? "#C4934A" : "#3F6853");
 
 export default function BudgetHealth({ envelopes = [], onAdjustAllocations, currency = "Rs." }: BudgetHealthProps) {
-  const money = (n: number) => `${currency} ${Math.round(n).toLocaleString("en-IN")}`;
+  const money = (n: number) => `${currency} ${Math.round(n).toLocaleString("en-PK")}`;
   const monthLabel = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const items = envelopes
     .map((env) => ({

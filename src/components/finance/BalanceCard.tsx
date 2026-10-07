@@ -13,26 +13,21 @@ import RemoveIcon from "@mui/icons-material/Remove";
 
 interface BalanceCardProps {
   balance: number;
-  onAdjust: (delta: number) => Promise<void>;
+  /** Applied optimistically by the page; the field clears instantly. */
+  onAdjust: (delta: number) => void;
 }
 
 export default function BalanceCard({ balance, onAdjust }: BalanceCardProps) {
   const [amount, setAmount] = useState<string>("");
-  const [submitting, setSubmitting] = useState<boolean>(false);
 
   const parsed = parseFloat(amount.replace(/,/g, ""));
   const isValid = Number.isFinite(parsed) && parsed > 0;
   const isNegative = balance < 0;
 
-  const handleAdjust = async (sign: 1 | -1) => {
+  const handleAdjust = (sign: 1 | -1) => {
     if (!isValid) return;
-    setSubmitting(true);
-    try {
-      await onAdjust(sign * parsed);
-      setAmount("");
-    } finally {
-      setSubmitting(false);
-    }
+    onAdjust(sign * parsed);
+    setAmount("");
   };
 
   const buttonSx = {
@@ -126,7 +121,7 @@ export default function BalanceCard({ balance, onAdjust }: BalanceCardProps) {
           <Button
             type="submit"
             variant="contained"
-            disabled={!isValid || submitting}
+            disabled={!isValid}
             startIcon={<AddIcon />}
             sx={{ ...buttonSx, bgcolor: "#111C2E", "&:hover": { bgcolor: "#000000" } }}
           >
@@ -134,7 +129,7 @@ export default function BalanceCard({ balance, onAdjust }: BalanceCardProps) {
           </Button>
           <Button
             variant="outlined"
-            disabled={!isValid || submitting}
+            disabled={!isValid}
             onClick={() => handleAdjust(-1)}
             startIcon={<RemoveIcon />}
             sx={{ ...buttonSx, color: "#8C3F3B", borderColor: "rgba(140, 63, 59, 0.4)" }}

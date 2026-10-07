@@ -15,23 +15,22 @@ import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
 import { DailyTask, TaskCategory, PriorityLevel } from "@/types/models";
-import { overviewService } from "@/services/overviewService";
 
 export interface AddTaskModalProps {
   open: boolean;
   onClose: () => void;
-  onTaskAdded: (newTask: DailyTask) => void;
+  /** Called with a valid task; the modal closes immediately and the page saves optimistically. */
+  onSubmit: (task: Pick<DailyTask, "title" | "category" | "priority">) => void;
 }
 
 export default function AddTaskModal({
   open,
   onClose,
-  onTaskAdded,
+  onSubmit,
 }: AddTaskModalProps) {
   const [title, setTitle] = useState<string>("");
   const [category, setCategory] = useState<TaskCategory>("work");
   const [priority, setPriority] = useState<PriorityLevel>("medium");
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
   const handleReset = () => {
@@ -46,29 +45,15 @@ export default function AddTaskModal({
     onClose();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
       setError("Task title is required");
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      const newTask = await overviewService.addTask({
-        title: title.trim(),
-        category,
-        priority,
-      });
-
-      onTaskAdded(newTask);
-      handleClose();
-    } catch (err) {
-      console.error("Failed to add task:", err);
-      setError(err instanceof Error ? err.message : "Failed to create task");
-    } finally {
-      setIsSubmitting(false);
-    }
+    onSubmit({ title: title.trim(), category, priority });
+    handleClose();
   };
 
   return (
@@ -153,20 +138,19 @@ export default function AddTaskModal({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2, pt: 1 }}>
-        <Button onClick={handleClose} disabled={isSubmitting} sx={{ color: "#68717C" }}>
+        <Button onClick={handleClose} sx={{ color: "#68717C" }}>
           Cancel
         </Button>
         <Button
           type="submit"
           variant="contained"
-          disabled={isSubmitting}
           sx={{
             bgcolor: "#0B1628",
             color: "#FCFBF8",
             "&:hover": { bgcolor: "#162338" },
           }}
         >
-          {isSubmitting ? "Adding..." : "Add Task"}
+          Add Task
         </Button>
       </DialogActions>
     </Dialog>

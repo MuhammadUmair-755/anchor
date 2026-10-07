@@ -1,17 +1,23 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Box from "@mui/material/Box";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
 import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
 import {
   Transaction,
   CashflowVelocity,
   TransactionFilterCriteria,
+  QuickEntryPayload,
 } from "@/types/models";
-import { financeService } from "@/services/financeService";
+import { financeService, CATEGORY_LABELS } from "@/services/financeService";
 import { currentMonthKey } from "@/lib/calendar";
 import {
   FinanceHeader,
@@ -21,6 +27,8 @@ import {
   CashflowVelocityCard,
 } from "@/components/finance";
 
+const errorText = (err: unknown, fallback: string) => (err instanceof Error ? err.message : fallback);
+
 export default function FinancePage() {
   const [balance, setBalance] = useState<number>(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -29,7 +37,10 @@ export default function FinancePage() {
   const [velocity, setVelocity] = useState<CashflowVelocity | null>(null);
 
   const [loading, setLoading] = useState<boolean>(true);
+  const [txLoading, setTxLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [addTransactionOpen, setAddTransactionOpen] = useState<boolean>(false);
+  const [deleting, setDeleting] = useState<Transaction | null>(null);
 
   // Filter & Pagination State
   const [filterCriteria, setFilterCriteria] = useState<TransactionFilterCriteria>({
@@ -52,42 +63,102 @@ export default function FinancePage() {
     message: "",
     severity: "success",
   });
+  const notify = (message: string, severity: "success" | "info" | "error" = "success") =>
+    setSnackbar({ open: true, message, severity });
 
-  // Load Transactions & Auxiliary Finance Data
-  const loadFinanceData = useCallback(async () => {
+  // Balance + velocity load once; the ledger reloads on every filter change.
+  useEffect(() => {
+    Promise.all([financeService.getBalance(), financeService.getCashflowVelocity()])
+      .then(([bal, vel]) => {
+        setBalance(bal);
+        setVelocity(vel);
+      })
+      .catch((err: unknown) => setError(errorText(err, "Failed to load financial records")))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Only the latest request may write state, so fast filter clicks never show stale rows.
+  const txRequest = useRef(0);
+  const loadTransactions = useCallback(async (criteria: TransactionFilterCriteria, silent = false) => {
+    const req = ++txRequest.current;
+    if (!silent) setTxLoading(true);
     try {
-      const [bal, txResponse, vel] = await Promise.all([
-        financeService.getBalance(),
-        financeService.getTransactions(filterCriteria),
-        financeService.getCashflowVelocity(),
-      ]);
-
-      setBalance(bal);
-      setTransactions(txResponse.transactions);
-      setTotalCount(txResponse.totalCount);
-      setTotalPages(txResponse.totalPages);
-      setVelocity(vel);
-      setLoading(false);
+      const res = await financeService.getTransactions(criteria);
+      if (req !== txRequest.current) return;
+      setTransactions(res.transactions);
+      setTotalCount(res.totalCount);
+      setTotalPages(res.totalPages);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to load financial records";
-      setError(msg);
-      setLoading(false);
+      if (req === txRequest.current) {
+        setSnackbar({ open: true, message: errorText(err, "Failed to load transactions"), severity: "error" });
+      }
+    } finally {
+      if (req === txRequest.current) setTxLoading(false);
     }
-  }, [filterCriteria]);
+  }, []);
 
   useEffect(() => {
-    loadFinanceData();
-  }, [loadFinanceData]);
+    loadTransactions(filterCriteria);
+  }, [filterCriteria, loadTransactions]);
 
-  const [addTransactionOpen, setAddTransactionOpen] = useState<boolean>(false);
+  // After a confirmed write, quietly re-sync pagination and velocity with the server.
+  const resync = () => {
+    loadTransactions(filterCriteria, true);
+    financeService.getCashflowVelocity().then(setVelocity).catch(() => {});
+  };
 
-  const handleTransactionSaved = (tx: Transaction) => {
-    setSnackbar({
-      open: true,
-      message: `Saved: ${tx.payeeOrPayer} (${tx.amount > 0 ? "+" : "-"}Rs. ${Math.abs(tx.amount).toLocaleString("en-IN")})`,
-      severity: "success",
-    });
-    loadFinanceData();
+  // Optimistic: the row and balance update instantly, and roll back if the server refuses.
+  const handleAddTransaction = async (entry: QuickEntryPayload) => {
+    const amount = entry.intent === "received" ? entry.amount : -entry.amount;
+    const temp: Transaction = {
+      id: `temp-${Date.now()}`,
+      amount,
+      currency: entry.currency,
+      flowType: entry.intent === "received" ? "inflow" : "outflow",
+      category: entry.category,
+      categoryLabel: CATEGORY_LABELS[entry.category] || entry.category,
+      payeeOrPayer: entry.memo || CATEGORY_LABELS[entry.category] || "Quick Entry",
+      note: entry.memo,
+      date: entry.date,
+      time: new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
+      paymentMethod: "card",
+      status: "cleared",
+      createdAt: new Date().toISOString(),
+    };
+    setTransactions((prev) => [temp, ...prev]);
+    setTotalCount((c) => c + 1);
+    setBalance((b) => b + amount);
+    try {
+      const saved = await financeService.recordTransaction(entry);
+      setTransactions((prev) => prev.map((t) => (t.id === temp.id ? saved : t)));
+      notify(`Saved: ${saved.payeeOrPayer} (${saved.amount > 0 ? "+" : "-"}Rs. ${Math.abs(saved.amount).toLocaleString("en-PK")})`);
+      resync();
+    } catch (err: unknown) {
+      setTransactions((prev) => prev.filter((t) => t.id !== temp.id));
+      setTotalCount((c) => c - 1);
+      setBalance((b) => b - amount);
+      notify(errorText(err, "Failed to record transaction"), "error");
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    const tx = deleting;
+    if (!tx) return;
+    setDeleting(null);
+    const index = transactions.findIndex((t) => t.id === tx.id);
+    setTransactions((prev) => prev.filter((t) => t.id !== tx.id));
+    setTotalCount((c) => c - 1);
+    setBalance((b) => b - tx.amount);
+    try {
+      await financeService.deleteTransaction(tx.id);
+      notify(`Deleted: ${tx.payeeOrPayer}`);
+      resync();
+    } catch (err: unknown) {
+      setTransactions((prev) => [...prev.slice(0, index), tx, ...prev.slice(index)]);
+      setTotalCount((c) => c + 1);
+      setBalance((b) => b + tx.amount);
+      notify(errorText(err, "Failed to delete transaction"), "error");
+    }
   };
 
   // Handle Criteria Change
@@ -120,34 +191,21 @@ export default function FinancePage() {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-
-      setSnackbar({
-        open: true,
-        message: "Ledger export downloaded successfully",
-        severity: "info",
-      });
+      notify("Ledger export downloaded successfully", "info");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to export CSV";
-      setSnackbar({
-        open: true,
-        message: msg,
-        severity: "error",
-      });
+      notify(errorText(err, "Failed to export CSV"), "error");
     }
   };
 
   // Add / remove funds directly on the balance
   const handleAdjustBalance = async (delta: number) => {
+    setBalance((b) => b + delta);
     try {
-      setBalance(await financeService.adjustBalance(delta));
-      setSnackbar({
-        open: true,
-        message: `${delta > 0 ? "Added" : "Removed"} Rs. ${Math.abs(delta).toLocaleString()} ${delta > 0 ? "to" : "from"} balance`,
-        severity: "success",
-      });
+      await financeService.adjustBalance(delta);
+      notify(`${delta > 0 ? "Added" : "Removed"} Rs. ${Math.abs(delta).toLocaleString()} ${delta > 0 ? "to" : "from"} balance`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to update balance";
-      setSnackbar({ open: true, message: msg, severity: "error" });
+      setBalance((b) => b - delta);
+      notify(errorText(err, "Failed to update balance"), "error");
     }
   };
 
@@ -233,6 +291,8 @@ export default function FinancePage() {
             onFilterChange={handleFilterChange}
             onPageChange={(page) => handleFilterChange({ page })}
             onExportCsv={handleExportCsv}
+            loading={txLoading}
+            onDelete={setDeleting}
           />
         </Box>
 
@@ -246,8 +306,43 @@ export default function FinancePage() {
       <AddTransactionModal
         open={addTransactionOpen}
         onClose={() => setAddTransactionOpen(false)}
-        onSuccess={handleTransactionSaved}
+        onSubmit={handleAddTransaction}
       />
+
+      <Dialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        maxWidth="xs"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 3, bgcolor: "#FCFBF8", m: 2 } } }}
+      >
+        <DialogTitle sx={{ fontFamily: "var(--font-newsreader), Georgia, serif", color: "#0B1628" }}>
+          Delete transaction?
+        </DialogTitle>
+        <DialogContent sx={{ color: "#68717C", fontSize: "0.9375rem", overflowWrap: "anywhere" }}>
+          &ldquo;{deleting?.payeeOrPayer}&rdquo; ({(deleting?.amount ?? 0) > 0 ? "+" : "-"}Rs.{" "}
+          {Math.abs(deleting?.amount ?? 0).toLocaleString("en-PK")}) will be removed and your balance adjusted.
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={() => setDeleting(null)} sx={{ color: "#68717C", textTransform: "none", minHeight: 40 }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            variant="contained"
+            sx={{
+              bgcolor: "#8C3F3B",
+              textTransform: "none",
+              fontWeight: 600,
+              minHeight: 40,
+              boxShadow: "none",
+              "&:hover": { bgcolor: "#753330", boxShadow: "none" },
+            }}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Notification Toast */}
       <Snackbar

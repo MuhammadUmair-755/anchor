@@ -11,7 +11,9 @@ import Typography from "@mui/material/Typography";
 import {
   ExecutiveOverviewData,
   DailyTask,
+  TransactionCategory,
 } from "@/types/models";
+import { BUDGET_CATEGORIES, currentCycle, toEnvelope } from "@/lib/budgets";
 import { overviewService } from "@/services/overviewService";
 import {
   LiquidityHero,
@@ -34,7 +36,7 @@ export default function OverviewPage() {
   const [addTaskOpen, setAddTaskOpen] = useState<boolean>(false);
 
   // Feedback Notification
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "info" }>({
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
     open: false,
     message: "",
     severity: "success",
@@ -64,52 +66,78 @@ export default function OverviewPage() {
     };
   }, []);
 
-  // Task Toggle Handler
+  const notify = (message: string, severity: "success" | "error" = "success") =>
+    setSnackbar({ open: true, message, severity });
+  const errorText = (err: unknown, fallback: string) => (err instanceof Error ? err.message : fallback);
+  const setTasks = (fn: (tasks: DailyTask[]) => DailyTask[]) =>
+    setData((prev) => (prev ? { ...prev, dailyTasks: fn(prev.dailyTasks) } : prev));
+
+  // All writes are optimistic: the UI changes now and rolls back if the server refuses.
   const handleToggleTask = async (taskId: string) => {
     const current = data?.dailyTasks.find((t) => t.id === taskId);
-    if (!current) return;
+    if (!current || taskId.startsWith("temp-")) return;
+    const flip = (t: DailyTask, isCompleted: boolean) => (t.id === taskId ? { ...t, isCompleted } : t);
+    setTasks((tasks) => tasks.map((t) => flip(t, !current.isCompleted)));
     try {
-      const updatedTask = await overviewService.setTaskCompleted(taskId, !current.isCompleted);
-      setData((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          dailyTasks: prev.dailyTasks.map((t) => (t.id === taskId ? updatedTask : t)),
-        };
-      });
-      setSnackbar({
-        open: true,
-        message: updatedTask.isCompleted ? `Task completed: "${updatedTask.title}"` : `Task reopened: "${updatedTask.title}"`,
-        severity: "success",
-      });
+      const updated = await overviewService.setTaskCompleted(taskId, !current.isCompleted);
+      setTasks((tasks) => tasks.map((t) => (t.id === taskId ? updated : t)));
     } catch (err: unknown) {
-      console.error("Failed to toggle task:", err);
+      setTasks((tasks) => tasks.map((t) => flip(t, current.isCompleted)));
+      notify(errorText(err, "Failed to update task"), "error");
     }
   };
 
-  // Add Task Handler
-  const handleTaskAdded = (newTask: DailyTask) => {
-    setData((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        dailyTasks: [newTask, ...prev.dailyTasks],
-      };
-    });
-    setSnackbar({
-      open: true,
-      message: `New task added: "${newTask.title}"`,
-      severity: "success",
-    });
+  const handleAddTask = async (task: Pick<DailyTask, "title" | "category" | "priority">) => {
+    const temp: DailyTask = {
+      ...task,
+      id: `temp-${Date.now()}`,
+      categoryLabel: task.category.toUpperCase(),
+      isCompleted: false,
+      createdAt: new Date().toISOString(),
+    };
+    setTasks((tasks) => [temp, ...tasks]);
+    try {
+      const created = await overviewService.addTask(task);
+      setTasks((tasks) => tasks.map((t) => (t.id === temp.id ? created : t)));
+      notify(`New task added: "${created.title}"`);
+    } catch (err: unknown) {
+      setTasks((tasks) => tasks.filter((t) => t.id !== temp.id));
+      notify(errorText(err, "Failed to create task"), "error");
+    }
   };
 
-  // Budgets saved: reload so spent/remaining figures come from the server
-  const handleBudgetsSaved = async () => {
+  const handleSaveBudgets = async (budgets: { category: TransactionCategory; amount: number }[]) => {
+    if (!data) return;
+    const previous = data;
+    const spentOf = (c: TransactionCategory) => data.outflowSectors.find((s) => s.category === c)?.amount ?? 0;
+    const budgetEnvelopes = budgets
+      .filter((b) => b.amount > 0)
+      .map((b) => {
+        const existing = data.budgetEnvelopes.find((e) => e.category === b.category);
+        const meta = BUDGET_CATEGORIES.find((c) => c.category === b.category)!;
+        return toEnvelope({
+          id: existing?.id ?? `temp-${b.category}`,
+          category: b.category,
+          label: existing?.label ?? meta.label,
+          allocated: b.amount,
+          spent: spentOf(b.category),
+          cycle: currentCycle(),
+          icon: existing?.icon ?? meta.icon,
+        });
+      });
+    setData({
+      ...data,
+      budgetEnvelopes,
+      budgetCap: budgetEnvelopes.reduce((sum, e) => sum + e.allocatedAmount, 0),
+      totalSpent: budgetEnvelopes.reduce((sum, e) => sum + e.spentAmount, 0),
+    });
     try {
-      setData(await overviewService.getOverviewData());
-      setSnackbar({ open: true, message: "Budgets updated.", severity: "success" });
-    } catch {
-      // keep current data; the modal already reported the save
+      await overviewService.saveBudgets(budgets);
+      notify("Budgets updated.");
+      overviewService.getOverviewData().then(setData).catch(() => {}); // quiet re-sync
+    } catch (err: unknown) {
+      setData(previous);
+      notify(errorText(err, "Failed to save budgets"), "error");
     }
   };
 
@@ -216,14 +244,14 @@ export default function OverviewPage() {
         onClose={() => setAdjustAllocationsOpen(false)}
         envelopes={data.budgetEnvelopes}
         sectors={data.outflowSectors}
-        onSaved={handleBudgetsSaved}
+        onSave={handleSaveBudgets}
       />
 
       {/* 2. Add New Task Dialog */}
       <AddTaskModal
         open={addTaskOpen}
         onClose={() => setAddTaskOpen(false)}
-        onTaskAdded={handleTaskAdded}
+        onSubmit={handleAddTask}
       />
 
       {/* Subtle Toast Feedback */}

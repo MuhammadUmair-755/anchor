@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS public.transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   amount NUMERIC(14, 2) NOT NULL, -- Positive for inflow, negative for outflow
-  currency TEXT NOT NULL DEFAULT 'INR' CHECK (currency IN ('INR', 'USD', 'EUR', 'GBP')),
+  currency TEXT NOT NULL DEFAULT 'PKR' CHECK (currency IN ('PKR', 'USD', 'EUR', 'GBP')),
   flow_type TEXT NOT NULL CHECK (flow_type IN ('inflow', 'outflow', 'transfer')),
   category TEXT NOT NULL CHECK (category IN (
     'food_dining',
@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS public.budget_envelopes (
   )),
   label TEXT NOT NULL,
   allocated_amount NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
-  currency TEXT NOT NULL DEFAULT 'INR' CHECK (currency IN ('INR', 'USD', 'EUR', 'GBP')),
+  currency TEXT NOT NULL DEFAULT 'PKR' CHECK (currency IN ('PKR', 'USD', 'EUR', 'GBP')),
   cycle TEXT NOT NULL, -- e.g. '2026-09' or 'September 2026'
   icon TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS public.recurring_obligations (
   user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   amount NUMERIC(14, 2) NOT NULL,
-  currency TEXT NOT NULL DEFAULT 'INR' CHECK (currency IN ('INR', 'USD', 'EUR', 'GBP')),
+  currency TEXT NOT NULL DEFAULT 'PKR' CHECK (currency IN ('PKR', 'USD', 'EUR', 'GBP')),
   billing_cycle TEXT NOT NULL CHECK (billing_cycle IN ('monthly', 'quarterly', 'annual')),
   renewal_notice TEXT,
   status TEXT NOT NULL DEFAULT 'upcoming' CHECK (status IN ('upcoming', 'cleared', 'alert')),

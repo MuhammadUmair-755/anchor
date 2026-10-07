@@ -153,7 +153,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const {
       amount,
-      currency = "INR",
+      currency = "PKR",
       flowType = "outflow",
       category = "other",
       payeeOrPayer,

@@ -17,8 +17,8 @@ export interface TaskModalProps {
   /** Task being edited; omit to create a new one. */
   task?: TaskItem | null;
   onClose: () => void;
-  /** Should throw on failure so the modal stays open. */
-  onSubmit: (input: TaskInput) => Promise<void>;
+  /** Called with a valid task; the modal closes immediately and the page saves optimistically. */
+  onSubmit: (input: TaskInput) => void;
 }
 
 const fieldSx = { "& .MuiInputBase-root": { bgcolor: "#FFFFFF", borderRadius: "8px" } };
@@ -48,19 +48,12 @@ function TaskForm({ task, onClose, onSubmit }: Omit<TaskModalProps, "open">) {
   const [priority, setPriority] = useState<PriorityLevel>(task?.priority ?? "medium");
   const [dueDate, setDueDate] = useState(task?.dueDate ?? "");
   const [dueTime, setDueTime] = useState(task?.dueTime ?? "");
-  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || saving) return;
-    setSaving(true);
-    try {
-      await onSubmit({ title: title.trim(), category, priority, dueDate: dueDate || null, dueTime: (dueDate && dueTime) || null });
-    } catch {
-      // error is surfaced by the page; keep the form open with the user's input
-    } finally {
-      setSaving(false);
-    }
+    if (!title.trim()) return;
+    onSubmit({ title: title.trim(), category, priority, dueDate: dueDate || null, dueTime: (dueDate && dueTime) || null });
+    onClose();
   };
 
   return (
@@ -121,7 +114,7 @@ function TaskForm({ task, onClose, onSubmit }: Omit<TaskModalProps, "open">) {
         <Button
           type="submit"
           variant="contained"
-          disabled={saving || !title.trim()}
+          disabled={!title.trim()}
           sx={{
             bgcolor: "#0B1628",
             color: "#FCFBF8",
@@ -134,7 +127,7 @@ function TaskForm({ task, onClose, onSubmit }: Omit<TaskModalProps, "open">) {
             "&:hover": { bgcolor: "#12243A", boxShadow: "none" },
           }}
         >
-          {saving ? "Saving..." : task ? "Save changes" : "Add task"}
+          {task ? "Save changes" : "Add task"}
         </Button>
       </DialogActions>
     </Box>

@@ -90,7 +90,7 @@ export default function TodayDebitsCard({
               fontFeatureSettings: '"tnum" on, "zero" on',
             }}
           >
-            Total: {currency} {totalSum.toLocaleString("en-IN")}
+            Total: {currency} {totalSum.toLocaleString("en-PK")}
           </Typography>
         </Box>
 
@@ -165,7 +165,7 @@ export default function TodayDebitsCard({
                   fontFeatureSettings: '"tnum" on, "zero" on',
                 }}
               >
-                {currency} {item.amount.toLocaleString("en-IN")}
+                {currency} {item.amount.toLocaleString("en-PK")}
               </Typography>
             </Box>
           ))}

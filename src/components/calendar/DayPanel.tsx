@@ -21,7 +21,7 @@ interface DayPanelProps {
   onToggleTask: (id: string, isCompleted: boolean) => void;
 }
 
-const money = (n: number) => `${n < 0 ? "-" : "+"}Rs. ${Math.abs(n).toLocaleString("en-IN")}`;
+const money = (n: number) => `${n < 0 ? "-" : "+"}Rs. ${Math.abs(n).toLocaleString("en-PK")}`;
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

@@ -31,7 +31,7 @@ const OTHER_COLOR = "#8a8f98";
 
 const SEGMENT_GAP = 0.8; // % of circumference left as surface between segments
 
-const formatMoney = (currency: string, n: number) => `${currency} ${Math.round(n).toLocaleString("en-IN")}`;
+const formatMoney = (currency: string, n: number) => `${currency} ${Math.round(n).toLocaleString("en-PK")}`;
 
 export default function OutflowDonutChart({
   sectors = [],

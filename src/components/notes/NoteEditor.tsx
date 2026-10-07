@@ -14,6 +14,7 @@ export interface NoteEditorProps {
   onTitleChange: (v: string) => void;
   onBodyChange: (v: string) => void;
   dirty: boolean;
+  /** True while a new note is being created; blocks a duplicate save. */
   saving: boolean;
   canDelete: boolean;
   onSave: () => void;
@@ -61,7 +62,7 @@ export default function NoteEditor({
           <ArrowBackRoundedIcon fontSize="small" />
         </IconButton>
         <Typography sx={{ flex: 1, fontFamily: UI_FONT, fontSize: "0.8125rem", color: dirty ? "#8C3F3B" : "#68717C" }}>
-          {saving ? "Saving..." : dirty ? "Unsaved changes" : "Saved"}
+          {dirty ? "Unsaved changes" : "Saved"}
         </Typography>
         {canDelete && (
           <Button onClick={onDelete} sx={{ textTransform: "none", fontFamily: UI_FONT, color: "#8C3F3B" }}>
