@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Newsreader, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import ThemeRegistry from "@/components/mui/ThemeRegistry";
@@ -28,6 +28,12 @@ export const metadata: Metadata = {
   title: "ANCHOR | Executive Life Command Center",
   description:
     "Integrated personal command center uniting financial velocity, daily operations, and long-term goal architecture.",
+  // Opens full-screen when added to an iPhone home screen
+  appleWebApp: { capable: true, title: "ANCHOR", statusBarStyle: "default" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#F7F5EF",
 };
 
 export default function RootLayout({

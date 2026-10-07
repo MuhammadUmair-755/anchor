@@ -143,6 +143,24 @@ export default function SignInPage() {
           },
         }}
       />
+
+      {/* Install hint (phones only; iPhone Safari never prompts on its own) */}
+      <Typography
+        sx={{
+          display: { xs: "block", md: "none" },
+          mt: 2.5,
+          px: 2,
+          textAlign: "center",
+          fontFamily: "var(--font-plus-jakarta-sans), sans-serif",
+          fontSize: "0.75rem",
+          color: "#68717C",
+          lineHeight: 1.6,
+        }}
+      >
+        📲 Add ANCHOR to your home screen
+        <br />
+        iPhone: Share → Add to Home Screen · Android: ⋮ → Install app
+      </Typography>
     </Box>
   );
 }
